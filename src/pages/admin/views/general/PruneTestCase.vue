@@ -10,8 +10,8 @@
       <el-table :data="data">
         <el-table-column
           label="Last Modified">
-          <template slot-scope="{row}">
-            {{row.create_time | timestampFormat }}
+          <template #default="{row}">
+            {{$filters.localtime(row.create_time)}}
           </template>
         </el-table-column>
         <el-table-column
@@ -22,7 +22,7 @@
           label="Option"
           fixed="right"
           width="200">
-          <template slot-scope="{row}">
+          <template #default="{row}">
             <icon-btn name="Delete" icon="trash" @click.native="deleteTestCase(row.id)"></icon-btn>
           </template>
         </el-table-column>

@@ -1,79 +1,71 @@
 <template>
-  <Row type="flex">
+  <Row type="flex" :gutter="18">
     <Col :span="24">
-    <Panel id="contest-card" shadow>
-      <div slot="title">{{query.rule_type === '' ? this.$i18n.t('m.All') : query.rule_type}} {{$t('m.Contests')}}</div>
-      <div slot="extra">
+    <Panel shadow>
+      <template #title>{{$t('m.Contest_List')}}</template>
+      <template #extra>
         <ul class="filter">
           <li>
-            <Dropdown @on-click="onRuleChange">
-              <span>{{query.rule_type === '' ? this.$i18n.t('m.Rule') : this.$i18n.t('m.' + query.rule_type)}}
-                <Icon type="arrow-down-b"></Icon>
-              </span>
-              <Dropdown-menu slot="list">
-                <Dropdown-item name="">{{$t('m.All')}}</Dropdown-item>
-                <Dropdown-item name="OI">{{$t('m.OI')}}</Dropdown-item>
-                <Dropdown-item name="ACM">{{$t('m.ACM')}}</Dropdown-item>
-              </Dropdown-menu>
+            <Dropdown @click="onRuleChange" transfer>
+              <a href="javascript:void(0)">
+                {{query.rule_type === '' ? this.$i18n.t('m.Rule') : this.$i18n.t('m.' + query.rule_type)}}
+                <Icon type="ios-arrow-down"></Icon>
+              </a>
+              <template #list>
+                <DropdownMenu>
+                  <DropdownItem name="">{{$t('m.All')}}</DropdownItem>
+                  <DropdownItem name="OI">{{$t('m.OI')}}</DropdownItem>
+                  <DropdownItem name="ACM">{{$t('m.ACM')}}</DropdownItem>
+                </DropdownMenu>
+              </template>
             </Dropdown>
           </li>
           <li>
-            <Dropdown @on-click="onStatusChange">
-              <span>{{query.status === '' ? this.$i18n.t('m.Status') : this.$i18n.t('m.' + CONTEST_STATUS_REVERSE[query.status].name.replace(/ /g,"_"))}}
-                <Icon type="arrow-down-b"></Icon>
-              </span>
-              <Dropdown-menu slot="list">
-                <Dropdown-item name="">{{$t('m.All')}}</Dropdown-item>
-                <Dropdown-item name="0">{{$t('m.Underway')}}</Dropdown-item>
-                <Dropdown-item name="1">{{$t('m.Not_Started')}}</Dropdown-item>
-                <Dropdown-item name="-1">{{$t('m.Ended')}}</Dropdown-item>
-              </Dropdown-menu>
+            <Dropdown @click="onStatusChange" transfer>
+              <a href="javascript:void(0)">
+                {{query.status === '' ? this.$i18n.t('m.Status') : this.$i18n.t('m.' + CONTEST_STATUS_REVERSE[query.status].name.replace(/ /g,'_'))}}
+                <Icon type="ios-arrow-down"></Icon>
+              </a>
+              <template #list>
+                <DropdownMenu>
+                  <DropdownItem name="">{{$t('m.All')}}</DropdownItem>
+                  <DropdownItem name="0">{{$t('m.Underway')}}</DropdownItem>
+                  <DropdownItem name="1">{{$t('m.Not_Started')}}</DropdownItem>
+                  <DropdownItem name="-1">{{$t('m.Ended')}}</DropdownItem>
+                </DropdownMenu>
+              </template>
             </Dropdown>
           </li>
           <li>
-            <Input id="keyword" @on-enter="changeRoute" @on-click="changeRoute" v-model="query.keyword"
-                   icon="ios-search-strong" placeholder="Keyword"/>
+            <Input v-model="query.keyword"
+                   @enter="changeRoute"
+                   @click="changeRoute"
+                   placeholder="Keyword"
+                   icon="ios-search-strong"/>
+          </li>
+          <li>
+            <Button type="info" @click="onReset">
+              <Icon type="refresh"></Icon>
+              {{$t('m.Reset')}}
+            </Button>
           </li>
         </ul>
-      </div>
-      <p id="no-contest" v-if="contests.length == 0">{{$t('m.No_contest')}}</p>
-      <ol id="contest-list">
-        <li v-for="contest in contests" :key="contest.title">
-          <Row type="flex" justify="space-between" align="middle">
-            <img class="trophy" src="../../../../assets/Cup.png"/>
-            <Col :span="18" class="contest-main">
-            <p class="title">
-              <a class="entry" @click.stop="goContest(contest)">
-                {{contest.title}}
-              </a>
-              <template v-if="contest.contest_type != 'Public'">
-                <Icon type="ios-locked-outline" size="20"></Icon>
-              </template>
-            </p>
-            <ul class="detail">
-              <li>
-                <Icon type="calendar" color="#3091f2"></Icon>
-                {{contest.start_time | localtime('YYYY-M-D HH:mm') }}
-              </li>
-              <li>
-                <Icon type="android-time" color="#3091f2"></Icon>
-                {{getDuration(contest.start_time, contest.end_time)}}
-              </li>
-              <li>
-                <Button size="small" shape="circle" @click="onRuleChange(contest.rule_type)">
-                  {{contest.rule_type}}
-                </Button>
-              </li>
-            </ul>
-            </Col>
-            <Col :span="4" style="text-align: center">
-            <Tag type="dot" :color="CONTEST_STATUS_REVERSE[contest.status].color">{{$t('m.' + CONTEST_STATUS_REVERSE[contest.status].name.replace(/ /g, "_"))}}</Tag>
-            </Col>
-          </Row>
-        </li>
-      </ol>
+      </template>
+      <Table style="width: 100%; font-size: 16px;"
+             :columns="contestTableColumns"
+             :data="contests"
+             :loading="loading"
+             disabled-hover
+             @row-click="goContest"></Table>
     </Panel>
-    <Pagination :total="total" :page-size.sync="limit" @on-change="changeRoute" :current.sync="page" :show-sizer="true" @on-page-size-change="changeRoute"></Pagination>
+    <Pagination 
+      :total="total" 
+      v-model:page-size="limit" 
+      @change="changeRoute" 
+      v-model:current="page" 
+      :show-sizer="true" 
+      @page-size-change="changeRoute"
+      style="margin-top: 20px;"></Pagination>
     </Col>
   </Row>
 
@@ -81,9 +73,10 @@
 
 <script>
   import api from '@oj/api'
-  import { mapGetters } from 'vuex'
+  import { useUserStore } from '@/stores/user'
   import utils from '@/utils/utils'
   import Pagination from '@/pages/oj/components/Pagination'
+  import Panel from '@/pages/oj/components/Panel.vue'
   import time from '@/utils/time'
   import { CONTEST_STATUS_REVERSE, CONTEST_TYPE } from '@/utils/constants'
 
@@ -92,7 +85,8 @@
   export default {
     name: 'contest-list',
     components: {
-      Pagination
+      Pagination,
+      Panel
     },
     data () {
       return {
@@ -106,9 +100,75 @@
         total: 0,
         rows: '',
         contests: [],
+        loading: false,
         CONTEST_STATUS_REVERSE: CONTEST_STATUS_REVERSE,
-//      for password modal use
-        cur_contest_id: ''
+        cur_contest_id: '',
+        contestTableColumns: [
+          {
+            title: this.$i18n.t('m.Title'),
+            key: 'title',
+            render: (h, params) => {
+              return h('span', [
+                h('a', {
+                  style: {
+                    color: '#2d8cf0',
+                    cursor: 'pointer'
+                  },
+                  onClick: () => {
+                    this.goContest(params.row)
+                  }
+                }, params.row.title),
+                params.row.contest_type !== 'Public' ? h('Icon', {
+                  type: 'ios-lock-outline',
+                  size: 16,
+                  style: {
+                    marginLeft: '5px',
+                    verticalAlign: 'middle'
+                  }
+                }) : null
+              ])
+            }
+          },
+          {
+            title: this.$i18n.t('m.Rule'),
+            key: 'rule_type',
+            width: 100,
+            align: 'center',
+            render: (h, params) => {
+              return h('Tag', {
+                color: params.row.rule_type === 'ACM' ? 'blue' : 'green'
+              }, params.row.rule_type)
+            }
+          },
+          {
+            title: this.$i18n.t('m.StartTime'),
+            key: 'start_time',
+            width: 170,
+            render: (h, params) => {
+              return h('span', time.utcToLocal(params.row.start_time, 'YYYY-MM-DD HH:mm'))
+            }
+          },
+          {
+            title: this.$i18n.t('m.Duration'),
+            key: 'duration',
+            width: 120,
+            render: (h, params) => {
+              return h('span', this.getDuration(params.row.start_time, params.row.end_time))
+            }
+          },
+          {
+            title: this.$i18n.t('m.Status'),
+            key: 'status',
+            align: 'center',
+            width: 120,
+            render: (h, params) => {
+              return h('Tag', {
+                type: 'dot',
+                color: CONTEST_STATUS_REVERSE[params.row.status].color
+              }, this.$i18n.t('m.' + CONTEST_STATUS_REVERSE[params.row.status].name.replace(/ /g, '_')))
+            }
+          }
+        ]
       }
     },
     beforeRouteEnter (to, from, next) {
@@ -133,9 +193,13 @@
       },
       getContestList (page = 1) {
         let offset = (page - 1) * this.limit
+        this.loading = true
         api.getContestList(offset, this.limit, this.query).then((res) => {
           this.contests = res.data.data.results
           this.total = res.data.data.total
+          this.loading = false
+        }).catch(() => {
+          this.loading = false
         })
       },
       changeRoute () {
@@ -162,7 +226,8 @@
         this.cur_contest_id = contest.id
         if (contest.contest_type !== CONTEST_TYPE.PUBLIC && !this.isAuthenticated) {
           this.$error(this.$i18n.t('m.Please_login_first'))
-          this.$store.dispatch('changeModalStatus', {visible: true})
+          const userStore = useUserStore()
+          userStore.changeModalStatus({visible: true})
         } else {
           this.$router.push({name: 'contest-details', params: {contestID: contest.id}})
         }
@@ -170,10 +235,26 @@
 
       getDuration (startTime, endTime) {
         return time.duration(startTime, endTime)
+      },
+      onReset () {
+        this.query = {
+          status: '',
+          keyword: '',
+          rule_type: ''
+        }
+        this.page = 1
+        this.changeRoute()
       }
     },
     computed: {
-      ...mapGetters(['isAuthenticated', 'user'])
+      isAuthenticated () {
+        const userStore = useUserStore()
+        return userStore.isAuthenticated
+      },
+      user () {
+        const userStore = useUserStore()
+        return userStore.user
+      }
     },
     watch: {
       '$route' (newVal, oldVal) {
@@ -186,47 +267,30 @@
   }
 </script>
 <style lang="less" scoped>
-  #contest-card {
-    #keyword {
-      width: 80%;
-      margin-right: 30px;
+  .filter {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    
+    li {
+      display: inline-block;
     }
-    #no-contest {
-      text-align: center;
-      font-size: 16px;
-      padding: 20px;
+    
+    .ivu-input {
+      width: 200px;
     }
-    #contest-list {
-      > li {
-        padding: 20px;
-        border-bottom: 1px solid rgba(187, 187, 187, 0.5);
-        list-style: none;
+  }
 
-        .trophy {
-          height: 40px;
-          margin-left: 10px;
-          margin-right: -20px;
-        }
-        .contest-main {
-          .title {
-            font-size: 18px;
-            a.entry {
-              color: #495060;
-              &:hover {
-                color: #2d8cf0;
-                border-bottom: 1px solid #2d8cf0;
-              }
-            }
-          }
-          li {
-            display: inline-block;
-            padding: 10px 0 0 10px;
-            &:first-child {
-              padding: 10px 0 0 0;
-            }
-          }
-        }
-      }
+  /deep/ .ivu-table {
+    td {
+      height: 48px;
+    }
+    
+    .ivu-table-cell {
+      font-size: 14px;
     }
   }
 </style>

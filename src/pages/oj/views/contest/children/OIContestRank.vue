@@ -1,11 +1,12 @@
 <template>
   <Panel shadow>
-    <div slot="title">{{ contest.title }}</div>
-    <div slot="extra">
+    <template #title>{{ contest.title }}</template>
+    <template #extra>
       <screen-full :height="18" :width="18" class="screen-full"></screen-full>
       <Poptip trigger="hover" placement="left-start">
         <Icon type="android-settings" size="20"></Icon>
-        <div slot="content" id="switches">
+        <template #content>
+          <div id="switches">
           <p>
             <span>{{$t('m.Menu')}}</span>
             <i-switch v-model="showMenu"></i-switch>
@@ -14,7 +15,7 @@
           </p>
           <p>
             <span>{{$t('m.Auto_Refresh')}}(10s)</span>
-            <i-switch :disabled="refreshDisabled" @on-change="handleAutoRefresh"></i-switch>
+            <i-switch :disabled="refreshDisabled" @change="handleAutoRefresh"></i-switch>
           </p>
           <p v-if="isContestAdmin">
             <span>{{$t('m.RealName')}}</span>
@@ -23,32 +24,36 @@
           <p>
             <Button type="primary" size="small" @click="downloadRankCSV">{{$t('m.download_csv')}}</Button>
           </p>
-        </div>
+          </div>
+        </template>
       </Poptip>
-    </div>
+    </template>
     <div v-show="showChart" class="echarts">
       <ECharts :options="options" ref="chart" auto-resize></ECharts>
     </div>
     <Table ref="tableRank" class="auto-resize" :columns="columns" :data="dataRank" disabled-hover></Table>
     <Pagination :total="total"
-                :page-size.sync="limit"
-                :current.sync="page"
-                @on-change="getContestRankData"
-                @on-page-size-change="getContestRankData(1)"
+                v-model:page-size="limit"
+                v-model:current="page"
+                @change="getContestRankData"
+                @page-size-change="getContestRankData(1)"
                 show-sizer></Pagination>
   </Panel>
 </template>
 <script>
-  import { mapActions } from 'vuex'
-
+  import { useContestStore } from '@/stores/contest'
+  import Panel from '@/pages/oj/components/Panel.vue'
   import Pagination from '@oj/components/Pagination'
-  import ContestRankMixin from './contestRankMixin'
+  import ContestRankMixin from './contestRankMixinVue3'
   import utils from '@/utils/utils'
+  import ECharts from 'vue-echarts'
 
   export default {
     name: 'acm-contest-rank',
     components: {
-      Pagination
+      Panel,
+      Pagination,
+      ECharts
     },
     mixins: [ContestRankMixin],
     data () {
@@ -73,14 +78,12 @@
                   display: 'inline-block',
                   'max-width': '150px'
                 },
-                on: {
-                  click: () => {
-                    this.$router.push(
-                      {
-                        name: 'user-home',
-                        query: {username: params.row.user.username}
-                      })
-                  }
+                onClick: () => {
+                  this.$router.push(
+                    {
+                      name: 'user-home',
+                      query: {username: params.row.user.username}
+                    })
                 }
               }, params.row.user.username)
             }
@@ -89,16 +92,8 @@
             title: this.$i18n.t('m.Total_Score'),
             align: 'center',
             render: (h, params) => {
-              return h('a', {
-                on: {
-                  click: () => {
-                    this.$router.push({
-                      name: 'contest-submission-list',
-                      query: {username: params.row.user.username}
-                    })
-                  }
-                }
-              }, params.row.total_score)
+              // Hidden link to submission list
+              return h('span', {}, params.row.total_score)
             }
           }
         ],
@@ -165,15 +160,15 @@
       this.contestID = this.$route.params.contestID
       this.getContestRankData(1)
       if (this.contestProblems.length === 0) {
-        this.getContestProblems().then((res) => {
-          this.addTableColumns(res.data.data)
+        const contestStore = useContestStore()
+        contestStore.getContestProblems(this.$route.params.contestID).then(() => {
+          this.addTableColumns(contestStore.contestProblems)
         })
       } else {
         this.addTableColumns(this.contestProblems)
       }
     },
     methods: {
-      ...mapActions(['getContestProblems']),
       applyToChart (rankData) {
         let [usernames, scores] = [[], []]
         rankData.forEach(ele => {
@@ -206,16 +201,14 @@
                 'class': {
                   'emphasis': true
                 },
-                on: {
-                  click: () => {
-                    this.$router.push({
-                      name: 'contest-problem-details',
-                      params: {
-                        contestID: this.contestID,
-                        problemID: problem._id
-                      }
-                    })
-                  }
+                onClick: () => {
+                  this.$router.push({
+                    name: 'contest-problem-details',
+                    params: {
+                      contestID: this.contestID,
+                      problemID: problem._id
+                    }
+                  })
                 }
               }, problem._id)
             },

@@ -10,19 +10,19 @@
         <template>
           <div id="contest-desc">
             <Panel :padding="20" shadow>
-              <div slot="title">
+              <template #title>
                 {{contest.title}}
-              </div>
-              <div slot="extra">
+              </template>
+              <template #extra>
                 <Tag type="dot" :color="countdownColor">
-                  <span id="countdown">{{countdown}}</span>
+                  <span id="countdown">{{countdownText}}</span>
                 </Tag>
-              </div>
+              </template>
               <div v-html="contest.description" class="markdown-body"></div>
               <div v-if="passwordFormVisible" class="contest-password">
                 <Input v-model="contestPassword" type="password"
                        placeholder="contest password" class="contest-password-input"
-                       @on-enter="checkPassword"/>
+                       @enter="checkPassword"/>
                 <Button type="info" @click="checkPassword">Enter</Button>
               </div>
             </Panel>
@@ -33,59 +33,36 @@
 
     </div>
     <div v-show="showMenu" id="contest-menu">
-      <VerticalMenu @on-click="handleRoute">
-        <VerticalMenu-item :route="{name: 'contest-details', params: {contestID: contestID}}">
-          <Icon type="home"></Icon>
-          {{$t('m.Overview')}}
-        </VerticalMenu-item>
-
-        <VerticalMenu-item :disabled="contestMenuDisabled"
-                           :route="{name: 'contest-announcement-list', params: {contestID: contestID}}">
-          <Icon type="chatbubble-working"></Icon>
-          {{$t('m.Announcements')}}
-        </VerticalMenu-item>
-
-        <VerticalMenu-item :disabled="contestMenuDisabled"
-                           :route="{name: 'contest-problem-list', params: {contestID: contestID}}">
-          <Icon type="ios-photos"></Icon>
-          {{$t('m.Problems')}}
-        </VerticalMenu-item>
-
-        <VerticalMenu-item v-if="OIContestRealTimePermission"
-                           :disabled="contestMenuDisabled"
-                           :route="{name: 'contest-submission-list'}">
-          <Icon type="navicon-round"></Icon>
-          {{$t('m.Submissions')}}
-        </VerticalMenu-item>
-
-        <VerticalMenu-item v-if="OIContestRealTimePermission"
-                           :disabled="contestMenuDisabled"
-                           :route="{name: 'contest-rank', params: {contestID: contestID}}">
-          <Icon type="stats-bars"></Icon>
-          {{$t('m.Rankings')}}
-        </VerticalMenu-item>
-
-        <VerticalMenu-item v-if="showAdminHelper"
-                           :route="{name: 'acm-helper', params: {contestID: contestID}}">
-          <Icon type="ios-paw"></Icon>
-          {{$t('m.Admin_Helper')}}
-        </VerticalMenu-item>
-      </VerticalMenu>
+      <ContestMenu 
+        :contest-i-d="contestID"
+        :contest-menu-disabled="contestMenuDisabled"
+        :o-i-contest-real-time-permission="OIContestRealTimePermission"
+        :show-admin-helper="showAdminHelper"
+      />
     </div>
   </div>
 </template>
 
 <script>
-  import moment from 'moment'
+  import dayjs from 'dayjs'
   import api from '@oj/api'
-  import { mapState, mapGetters, mapActions } from 'vuex'
-  import { types } from '@/store'
+  import { useContestStore } from '@/stores/contest'
   import { CONTEST_STATUS_REVERSE, CONTEST_STATUS } from '@/utils/constants'
   import time from '@/utils/time'
+  import Panel from '@/pages/oj/components/Panel.vue'
+  import ContestMenu from '@/pages/oj/components/ContestMenu.vue'
+  import { Table, Tag, Input, Button } from 'view-ui-plus'
 
   export default {
     name: 'ContestDetail',
-    components: {},
+    components: {
+      Panel,
+      ContestMenu,
+      Table,
+      Tag,
+      Input,
+      Button
+    },
     data () {
       return {
         CONTEST_STATUS: CONTEST_STATUS,
@@ -109,7 +86,8 @@
           {
             title: this.$i18n.t('m.ContestType'),
             render: (h, params) => {
-              return h('span', this.$i18n.t('m.' + params.row.contest_type ? params.row.contest_type.replace(' ', '_') : ''))
+              const type = params.row.contest_type || ''
+              return h('span', type ? this.$i18n.t('m.' + type.replace(/ /g, '_')) : '')
             }
           },
           {
@@ -130,21 +108,35 @@
     mounted () {
       this.contestID = this.$route.params.contestID
       this.route_name = this.$route.name
-      this.$store.dispatch('getContest').then(res => {
-        this.changeDomTitle({title: res.data.data.title})
-        let data = res.data.data
-        let endTime = moment(data.end_time)
-        if (endTime.isAfter(moment(data.now))) {
-          this.timer = setInterval(() => {
-            this.$store.commit(types.NOW_ADD_1S)
-          }, 1000)
-        }
-      })
+      this.loadContest()
+      
+      // If we're at the root contest route, redirect to the overview
+      if (this.$route.name === 'contest-details' && this.$route.path.endsWith('/')) {
+        // The overview is shown on the main contest-details route
+      }
     },
     methods: {
-      ...mapActions(['changeDomTitle']),
-      handleRoute (route) {
-        this.$router.push(route)
+      async loadContest () {
+        const contestStore = useContestStore()
+        try {
+          await contestStore.getContest(this.contestID)
+          contestStore.changeDomTitle({title: contestStore.contest.title})
+          
+          // Check if user has access
+          if (contestStore.contest.contest_type !== 'Public') {
+            await contestStore.getContestAccess(this.contestID)
+          }
+          
+          // Set up countdown timer
+          let endTime = dayjs(contestStore.contest.end_time)
+          if (endTime.isAfter(dayjs())) {
+            this.timer = setInterval(() => {
+              contestStore.updateNow()
+            }, 1000)
+          }
+        } catch (error) {
+          console.error('Failed to load contest:', error)
+        }
       },
       checkPassword () {
         if (this.contestPassword === '') {
@@ -154,7 +146,8 @@
         this.btnLoading = true
         api.checkContestPassword(this.contestID, this.contestPassword).then((res) => {
           this.$success('Succeeded')
-          this.$store.commit(types.CONTEST_ACCESS, {access: true})
+          const contestStore = useContestStore()
+          contestStore.access = true
           this.btnLoading = false
         }, (res) => {
           this.btnLoading = false
@@ -162,16 +155,57 @@
       }
     },
     computed: {
-      ...mapState({
-        showMenu: state => state.contest.itemVisible.menu,
-        contest: state => state.contest.contest,
-        contest_table: state => [state.contest.contest],
-        now: state => state.contest.now
-      }),
-      ...mapGetters(
-        ['contestMenuDisabled', 'contestRuleType', 'contestStatus', 'countdown', 'isContestAdmin',
-          'OIContestRealTimePermission', 'passwordFormVisible']
-      ),
+      showMenu () {
+        const contestStore = useContestStore()
+        return contestStore.itemVisible.menu
+      },
+      contest () {
+        const contestStore = useContestStore()
+        return contestStore.contest
+      },
+      contest_table () {
+        const contestStore = useContestStore()
+        return [contestStore.contest]
+      },
+      now () {
+        const contestStore = useContestStore()
+        return contestStore.now
+      },
+      contestMenuDisabled () {
+        const contestStore = useContestStore()
+        return contestStore.contestMenuDisabled
+      },
+      contestRuleType () {
+        const contestStore = useContestStore()
+        return contestStore.contestRuleType
+      },
+      contestStatus () {
+        const contestStore = useContestStore()
+        return contestStore.contestStatus
+      },
+      countdown () {
+        const contestStore = useContestStore()
+        return contestStore.countdown
+      },
+      countdownText () {
+        const seconds = Math.abs(this.countdown)
+        const h = Math.floor(seconds / 3600)
+        const m = Math.floor((seconds - h * 3600) / 60)
+        const s = seconds - h * 3600 - m * 60
+        return `${h}:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`
+      },
+      isContestAdmin () {
+        const contestStore = useContestStore()
+        return contestStore.isContestAdmin
+      },
+      OIContestRealTimePermission () {
+        const contestStore = useContestStore()
+        return contestStore.OIContestRealTimePermission
+      },
+      passwordFormVisible () {
+        const contestStore = useContestStore()
+        return contestStore.contest.contest_type === 'Password Protected' && !contestStore.access
+      },
       countdownColor () {
         if (this.contestStatus) {
           return CONTEST_STATUS_REVERSE[this.contestStatus].color
@@ -185,45 +219,63 @@
       '$route' (newVal) {
         this.route_name = newVal.name
         this.contestID = newVal.params.contestID
-        this.changeDomTitle({title: this.contest.title})
+        const contestStore = useContestStore()
+        contestStore.changeDomTitle({title: this.contest.title})
       }
     },
     beforeDestroy () {
       clearInterval(this.timer)
-      this.$store.commit(types.CLEAR_CONTEST)
+      const contestStore = useContestStore()
+      contestStore.clearContest()
     }
   }
 </script>
 
 <style scoped lang="less">
-  pre {
-    display: inline-block;
-  }
-
-  #countdown {
-    font-size: 16px;
-  }
-
   .flex-container {
+    display: flex;
+    
     #contest-main {
-      flex: 1 1;
-      width: 0;
+      flex: 1 1 auto;
+      min-width: 0;
+      
       #contest-desc {
-        flex: auto;
+        .markdown-body {
+          margin: 20px 0;
+          
+          pre {
+            display: inline-block;
+          }
+        }
       }
     }
+    
     #contest-menu {
-      flex: none;
-      width: 210px;
+      flex: 0 0 250px;
       margin-left: 20px;
     }
+    
     .contest-password {
       margin-top: 20px;
       margin-bottom: -10px;
+      
       &-input {
         width: 200px;
         margin-right: 10px;
       }
+    }
+  }
+
+  #countdown {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  /deep/ .ivu-table {
+    margin-top: 20px;
+    
+    td {
+      padding: 12px 8px;
     }
   }
 </style>

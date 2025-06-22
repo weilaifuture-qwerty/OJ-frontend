@@ -1,15 +1,14 @@
-import 'babel-polyfill'
-import Vue from 'vue'
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import App from './App.vue'
-import store from '@/store'
 import i18n from '@/i18n'
-import Element from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
+import ElementPlus from 'element-plus'
+import { ElMessage } from 'element-plus'
+import 'element-plus/dist/index.css'
 
 import filters from '@/utils/filters'
 import router from './router'
 import { GOOGLE_ANALYTICS_ID } from '@/utils/constants'
-import VueAnalytics from 'vue-analytics'
 import katex from '@/plugins/katex'
 
 import Panel from './components/Panel.vue'
@@ -18,39 +17,44 @@ import Save from './components/btn/Save.vue'
 import Cancel from './components/btn/Cancel.vue'
 import './style.less'
 
-// register global utility filters.
+const app = createApp(App)
+const pinia = createPinia()
+
+// Use Pinia for state management
+app.use(pinia)
+app.use(router)
+app.use(i18n)
+app.use(ElementPlus)
+app.use(katex)
+
+// Register global components
+app.component(IconBtn.name, IconBtn)
+app.component(Panel.name, Panel)
+app.component(Save.name, Save)
+app.component(Cancel.name, Cancel)
+
+// Register global properties for filters
+app.config.globalProperties.$filters = filters
 Object.keys(filters).forEach(key => {
-  Vue.filter(key, filters[key])
+  app.config.globalProperties[`$${key}`] = filters[key]
 })
 
-Vue.use(VueAnalytics, {
-  id: GOOGLE_ANALYTICS_ID,
-  router
-})
-Vue.use(katex)
-Vue.component(IconBtn.name, IconBtn)
-Vue.component(Panel.name, Panel)
-Vue.component(Save.name, Save)
-Vue.component(Cancel.name, Cancel)
-
-Vue.use(Element, {
-  i18n: (key, value) => i18n.t(key, value)
-})
-
-Vue.prototype.$error = (msg) => {
-  Vue.prototype.$message({'message': msg, 'type': 'error'})
+// Configure global message methods
+app.config.globalProperties.$error = (msg) => {
+  ElMessage.error(msg)
 }
 
-Vue.prototype.$warning = (msg) => {
-  Vue.prototype.$message({'message': msg, 'type': 'warning'})
+app.config.globalProperties.$warning = (msg) => {
+  ElMessage.warning(msg)
 }
 
-Vue.prototype.$success = (msg) => {
-  if (!msg) {
-    Vue.prototype.$message({'message': 'Succeeded', 'type': 'success'})
-  } else {
-    Vue.prototype.$message({'message': msg, 'type': 'success'})
-  }
+app.config.globalProperties.$success = (msg) => {
+  ElMessage.success(msg || 'Succeeded')
 }
 
-new Vue(Vue.util.extend({router, store, i18n}, App)).$mount('#app')
+// Google Analytics (if needed)
+if (GOOGLE_ANALYTICS_ID) {
+  // TODO: Add Vue 3 compatible analytics solution
+}
+
+app.mount('#app')

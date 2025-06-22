@@ -1,35 +1,46 @@
-import Vue from 'vue'
-import VueI18n from 'vue-i18n'
-// ivew UI
-import ivenUS from 'iview/dist/locale/en-US'
-import ivzhCN from 'iview/dist/locale/zh-CN'
-import ivzhTW from 'iview/dist/locale/zh-TW'
-// element UI
-import elenUS from 'element-ui/lib/locale/lang/en'
-import elzhCN from 'element-ui/lib/locale/lang/zh-CN'
-import elzhTW from 'element-ui/lib/locale/lang/zh-TW'
+import { createI18n } from 'vue-i18n'
 
-Vue.use(VueI18n)
+// Import OJ and Admin messages
+import { m as ojEnUS } from './oj/en-US.js'
+import { m as ojZhCN } from './oj/zh-CN.js'
+import { m as ojZhTW } from './oj/zh-TW.js'
+import { m as adminEnUS } from './admin/en-US.js'
+import { m as adminZhCN } from './admin/zh-CN.js'
+import { m as adminZhTW } from './admin/zh-TW.js'
+
+// Import ViewUI Plus locale
+import enUSLocale from 'view-ui-plus/dist/locale/en-US'
+import zhCNLocale from 'view-ui-plus/dist/locale/zh-CN'
+import zhTWLocale from 'view-ui-plus/dist/locale/zh-TW'
 
 const languages = [
-  {value: 'en-US', label: 'English', iv: ivenUS, el: elenUS},
-  {value: 'zh-CN', label: '简体中文', iv: ivzhCN, el: elzhCN},
-  {value: 'zh-TW', label: '繁體中文', iv: ivzhTW, el: elzhTW}
+  {value: 'en-US', label: 'English'},
+  {value: 'zh-CN', label: '简体中文'},
+  {value: 'zh-TW', label: '繁體中文'}
 ]
-const messages = {}
 
-// combine admin and oj
-for (let lang of languages) {
-  let locale = lang.value
-  let m = require(`./oj/${locale}`).m
-  Object.assign(m, require(`./admin/${locale}`).m)
-  let ui = Object.assign(lang.iv, lang.el)
-  messages[locale] = Object.assign({m: m}, ui)
+const messages = {
+  'en-US': { 
+    m: { ...ojEnUS, ...adminEnUS },
+    ...enUSLocale
+  },
+  'zh-CN': { 
+    m: { ...ojZhCN, ...adminZhCN },
+    ...zhCNLocale
+  },
+  'zh-TW': { 
+    m: { ...ojZhTW, ...adminZhTW },
+    ...zhTWLocale
+  }
 }
-// load language packages
-export default new VueI18n({
+
+// Create i18n instance
+const i18n = createI18n({
+  legacy: true, // Use legacy mode for now to support Vue 2 style components
   locale: 'en-US',
+  fallbackLocale: 'en-US',
   messages: messages
 })
 
-export {languages}
+export default i18n
+export { languages }

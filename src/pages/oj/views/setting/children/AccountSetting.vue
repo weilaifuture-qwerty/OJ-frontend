@@ -50,6 +50,7 @@
 <script>
   import api from '@oj/api'
   import { FormMixin } from '@oj/components/mixins'
+  import { useUserStore } from '@/stores/user'
 
   export default {
     mixins: [FormMixin],
@@ -114,7 +115,8 @@
       }
     },
     mounted () {
-      this.formEmail.old_email = this.$store.getters.user.email || ''
+      const userStore = useUserStore()
+      this.formEmail.old_email = userStore.user?.email || ''
     },
     methods: {
       changePassword () {

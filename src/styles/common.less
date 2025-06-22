@@ -78,6 +78,37 @@ a.emphasis{
   @import './markdown.less';
 }
 
+// Fix layout spacing for OJ pages
+.content-app {
+  .ivu-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .ivu-col {
+    padding: 0 9px;
+  }
+}
+
+// Fix Panel/Card styling
+.panel-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+// Fix table cell links
+.problem-table-link {
+  color: #2d8cf0;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  
+  &:hover {
+    color: #57a3f3;
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -100,4 +131,35 @@ a.emphasis{
   }
 }
 
+// Fix dropdown styling
+.ivu-dropdown {
+  .ivu-select-dropdown {
+    margin: 5px 0;
+    padding: 5px 0;
+    background-color: #fff;
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+    position: absolute;
+    z-index: 900;
+  }
+}
+
+// Fix pagination styling  
+.ivu-page {
+  text-align: center;
+  margin: 20px 0;
+}
+
+// Fix loading spin
+.ivu-spin-fix {
+  text-align: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255,255,255,.9);
+}
 

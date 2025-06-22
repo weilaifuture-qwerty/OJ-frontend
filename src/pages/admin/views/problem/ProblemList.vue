@@ -1,63 +1,79 @@
 <template>
   <div class="view">
     <Panel :title="contestId ? this.$i18n.t('m.Contest_Problem_List') : this.$i18n.t('m.Problem_List')">
-      <div slot="header">
+      <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
         <el-input
           v-model="keyword"
           prefix-icon="el-icon-search"
-          placeholder="Keywords">
+          placeholder="Search by title, ID, or author..."
+          style="width: 300px;"
+          @input="getProblemList(1)"
+          clearable>
         </el-input>
+        <div style="font-size: 14px; color: #909399;">
+          Total: <span style="font-weight: 600; color: #409EFF;">{{ total }}</span> problems
+        </div>
       </div>
       <el-table
         v-loading="loading"
-        element-loading-text="loading"
+        element-loading-text="Loading..."
         ref="table"
         :data="problemList"
         @row-dblclick="handleDblclick"
-        style="width: 100%">
+        style="width: 100%"
+        :stripe="true"
+        :border="true">
         <el-table-column
-          width="100"
+          width="80"
           prop="id"
-          label="ID">
+          label="ID"
+          align="center">
         </el-table-column>
         <el-table-column
-          width="150"
-          label="Display ID">
-          <template slot-scope="{row}">
-            <span v-show="!row.isEditing">{{row._id}}</span>
+          width="120"
+          label="Display ID"
+          align="center">
+          <template #default="{row}">
+            <span v-show="!row.isEditing" style="font-weight: 600; color: #409EFF;">{{row._id}}</span>
             <el-input v-show="row.isEditing" v-model="row._id"
+                      size="small"
                       @keyup.enter.native="handleInlineEdit(row)">
-
             </el-input>
           </template>
         </el-table-column>
         <el-table-column
           prop="title"
-          label="Title">
-          <template slot-scope="{row}">
-            <span v-show="!row.isEditing">{{row.title}}</span>
+          label="Title"
+          min-width="200">
+          <template #default="{row}">
+            <span v-show="!row.isEditing" style="font-weight: 500;">{{row.title}}</span>
             <el-input v-show="row.isEditing" v-model="row.title"
+                      size="small"
                       @keyup.enter.native="handleInlineEdit(row)">
             </el-input>
           </template>
         </el-table-column>
         <el-table-column
           prop="created_by.username"
-          label="Author">
+          label="Author"
+          width="120"
+          align="center">
         </el-table-column>
         <el-table-column
-          width="200"
+          width="180"
           prop="create_time"
-          label="Create Time">
-          <template slot-scope="scope">
-            {{scope.row.create_time | localtime }}
+          label="Created"
+          align="center">
+          <template #default="scope">
+            {{$filters.localtime(scope.row.create_time)}}
           </template>
         </el-table-column>
         <el-table-column
-          width="100"
+          width="80"
           prop="visible"
-          label="Visible">
-          <template slot-scope="scope">
+          label="Visible"
+          align="center">
+          <template #default="scope">
             <el-switch v-model="scope.row.visible"
                        active-text=""
                        inactive-text=""
@@ -67,54 +83,61 @@
         </el-table-column>
         <el-table-column
           fixed="right"
-          label="Operation"
-          width="250">
-          <div slot-scope="scope">
-            <icon-btn name="Edit" icon="edit" @click.native="goEdit(scope.row.id)"></icon-btn>
-            <icon-btn v-if="contestId" name="Make Public" icon="clone"
-                      @click.native="makeContestProblemPublic(scope.row.id)"></icon-btn>
-            <icon-btn icon="download" name="Download TestCase"
-                      @click.native="downloadTestCase(scope.row.id)"></icon-btn>
-            <icon-btn icon="trash" name="Delete Problem"
-                      @click.native="deleteProblem(scope.row.id)"></icon-btn>
-          </div>
+          label="Actions"
+          width="280"
+          align="center">
+          <template #default="scope">
+            <div style="display: flex; justify-content: center; gap: 8px;">
+              <el-button type="primary" size="small" link
+                         @click="goEdit(scope.row.id)">Edit</el-button>
+              <el-button v-if="contestId" type="info" size="small" link
+                         @click="makeContestProblemPublic(scope.row.id)">Public</el-button>
+              <el-button type="warning" size="small" link
+                         @click="downloadTestCase(scope.row.id)">Download</el-button>
+              <el-button type="danger" size="small" link
+                         @click="deleteProblem(scope.row.id)">Delete</el-button>
+            </div>
+          </template>
         </el-table-column>
       </el-table>
-      <div class="panel-options">
-        <el-button type="primary" size="small"
-                   @click="goCreateProblem" icon="el-icon-plus">Create
-        </el-button>
-        <el-button v-if="contestId" type="primary"
-                   size="small" icon="el-icon-plus"
-                   @click="addProblemDialogVisible = true">Add From Public Problem
-        </el-button>
+      <div class="panel-options" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+        <div>
+          <el-button type="primary" size="default"
+                     @click="goCreateProblem" icon="el-icon-plus">Create Problem
+          </el-button>
+          <el-button v-if="contestId" type="success"
+                     size="default" icon="el-icon-document-add"
+                     @click="addProblemDialogVisible = true">Add From Public
+          </el-button>
+        </div>
         <el-pagination
           class="page"
-          layout="prev, pager, next"
+          layout="total, prev, pager, next, jumper"
           @current-change="currentChange"
           :page-size="pageSize"
+          :current-page="currentPage"
           :total="total">
         </el-pagination>
       </div>
     </Panel>
     <el-dialog title="Sure to update the problem? "
                width="20%"
-               :visible.sync="InlineEditDialogVisible"
-               @close-on-click-modal="false">
+               v-model="InlineEditDialogVisible"
+               :close-on-click-modal="false">
       <div>
         <p>DisplayID: {{currentRow._id}}</p>
         <p>Title: {{currentRow.title}}</p>
       </div>
-      <span slot="footer">
+      <template #footer>
         <cancel @click.native="InlineEditDialogVisible = false; getProblemList(currentPage)"></cancel>
         <save @click.native="updateProblem(currentRow)"></save>
-      </span>
+      </template>
     </el-dialog>
     <el-dialog title="Add Contest Problem"
                v-if="contestId"
                width="80%"
-               :visible.sync="addProblemDialogVisible"
-               @close-on-click-modal="false">
+               v-model="addProblemDialogVisible"
+               :close-on-click-modal="false">
       <add-problem-component :contestID="contestId" @on-change="getProblemList"></add-problem-component>
     </el-dialog>
   </div>
@@ -123,12 +146,20 @@
 <script>
   import api from '../../api.js'
   import utils from '@/utils/utils'
+  import Panel from '../../components/Panel.vue'
   import AddProblemComponent from './AddPublicProblem.vue'
+  import IconBtn from '../../components/btn/IconBtn.vue'
+  import Cancel from '../../components/btn/Cancel.vue'
+  import Save from '../../components/btn/Save.vue'
 
   export default {
     name: 'ProblemList',
     components: {
-      AddProblemComponent
+      Panel,
+      AddProblemComponent,
+      IconBtn,
+      Cancel,
+      Save
     },
     data () {
       return {
@@ -185,6 +216,7 @@
           keyword: this.keyword,
           contest_id: this.contestId
         }
+        console.log('Loading problems with:', { funcName, params, routeName: this.routeName })
         api[funcName](params).then(res => {
           this.loading = false
           this.total = res.data.data.total
@@ -192,8 +224,10 @@
             problem.isEditing = false
           }
           this.problemList = res.data.data.results
-        }, res => {
+        }, err => {
           this.loading = false
+          console.error('Failed to load problem list:', err)
+          this.$message.error('Failed to load problems: ' + (err.message || 'Unknown error'))
         })
       },
       deleteProblem (id) {
@@ -249,7 +283,7 @@
         this.getProblemList(this.currentPage)
       },
       'keyword' () {
-        this.currentChange()
+        this.currentChange(1)
       }
     }
   }

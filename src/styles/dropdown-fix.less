@@ -1,0 +1,132 @@
+// Dropdown visibility fixes for ViewUI Plus
+
+// Reset any conflicting styles
+.ivu-dropdown {
+  position: relative;
+  display: inline-block;
+  
+  // Ensure trigger is properly positioned
+  & > a,
+  & > button,
+  & > .ivu-btn {
+    position: relative;
+    cursor: pointer;
+  }
+}
+
+// Dropdown menu positioning
+.ivu-select-dropdown,
+.ivu-dropdown .ivu-dropdown-menu {
+  position: absolute;
+  z-index: 1050;
+  background-color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.2);
+  border-radius: 4px;
+  margin: 5px 0;
+  padding: 5px 0;
+  min-width: 100px;
+}
+
+// Dropdown items
+.ivu-dropdown-item {
+  display: block;
+  padding: 7px 16px;
+  clear: both;
+  color: #515a6e;
+  font-size: 14px;
+  font-weight: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .2s ease-in-out;
+  line-height: normal;
+  
+  &:hover {
+    background-color: #f3f3f3;
+    color: #2d8cf0;
+    text-decoration: none;
+  }
+  
+  &-divided {
+    margin-top: 5px;
+    border-top: 1px solid #e8eaec;
+    padding-top: 7px;
+  }
+  
+  &-disabled {
+    color: #c5c8ce;
+    cursor: not-allowed;
+    
+    &:hover {
+      background-color: transparent;
+      color: #c5c8ce;
+    }
+  }
+}
+
+// Fix submenu dropdown positioning
+.ivu-menu-horizontal {
+  .ivu-menu-submenu {
+    position: relative;
+    
+    .ivu-menu-submenu-title {
+      position: relative;
+      display: block;
+      cursor: pointer;
+      transition: all .2s ease-in-out;
+    }
+    
+    .ivu-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 970;
+      min-width: 100%;
+      margin: 5px 0;
+      background-color: #fff;
+      box-shadow: 0 1px 6px rgba(0,0,0,.2);
+      border-radius: 4px;
+    }
+  }
+}
+
+// User dropdown specific positioning
+.drop-menu {
+  .ivu-select-dropdown,
+  .ivu-dropdown-menu {
+    right: 0;
+    left: auto;
+  }
+}
+
+// Visibility control
+.ivu-dropdown {
+  .ivu-dropdown-menu,
+  .ivu-select-dropdown {
+    display: none;
+  }
+  
+  &.ivu-dropdown-visible {
+    .ivu-dropdown-menu,
+    .ivu-select-dropdown {
+      display: block;
+    }
+  }
+}
+
+// Submenu visibility
+.ivu-menu-submenu {
+  .ivu-menu {
+    display: none;
+  }
+  
+  &.ivu-menu-opened {
+    .ivu-menu {
+      display: block;
+    }
+  }
+}
+
+// Ensure proper layering
+.ivu-select-dropdown.ivu-dropdown-transfer {
+  z-index: 1060;
+}

@@ -1,71 +1,25 @@
 <template>
   <div class="setting-main">
     <div class="section-title">{{$t('m.Avatar_Setting')}}</div>
-    <template v-if="!avatarOption.imgSrc">
-      <Upload type="drag"
-              class="mini-container"
-              accept=".jpg,.jpeg,.png,.bmp,.gif"
-              action=""
-              :before-upload="handleSelectFile">
-        <div style="padding: 30px 0">
-          <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
-          <p>Drop here, or click to select manually</p>
-        </div>
-      </Upload>
-    </template>
-
-    <template v-else>
-      <div class="flex-container">
-        <div class="cropper-main inline">
-          <vueCropper
-            ref="cropper"
-            autoCrop
-            fixed
-            :autoCropWidth="200"
-            :autoCropHeight="200"
-            :img="avatarOption.imgSrc"
-            :outputSize="avatarOption.size"
-            :outputType="avatarOption.outputType"
-            :info="true"
-            @realTime="realTime">
-          </vueCropper>
-        </div>
-        <ButtonGroup vertical class="cropper-btn">
-          <Button @click="rotate('left')">
-            <Icon type="arrow-return-left" size="20"></Icon>
-          </Button>
-          <Button @click="rotate('right')">
-            <Icon type="arrow-return-right" size="20"></Icon>
-          </Button>
-          <Button @click="reselect">
-            <Icon type="refresh" size="20"></Icon>
-          </Button>
-          <Button @click="finishCrop">
-            <Icon type="checkmark-round" size="20"></Icon>
-          </Button>
-        </ButtonGroup>
-        <div class="cropper-preview" :style="previewStyle">
-          <div :style=" preview.div">
-            <img :src="avatarOption.imgSrc" :style="preview.img">
-          </div>
-        </div>
-      </div>
-    </template>
-    <Modal v-model="uploadModalVisible"
-           title="Upload the avatar">
-      <div class="upload-modal">
-        <p class="notice">Your avatar will be set to:</p>
-        <img :src="uploadImgSrc"/>
-      </div>
-      <div slot="footer">
-        <Button @click="uploadAvatar" :loading="loadingUploadBtn">upload</Button>
-      </div>
-    </Modal>
+    <AvatarUpload />
 
     <div class="section-title">{{$t('m.Profile_Setting')}}</div>
     <Form ref="formProfile" :model="formProfile">
       <Row type="flex" :gutter="30" justify="space-around">
         <Col :span="11">
+          <FormItem label="Username">
+            <Input v-model="currentUsername" disabled>
+              <Button slot="append" @click="showUsernameModal = true" :disabled="!canChangeUsername">
+                Change Username
+              </Button>
+            </Input>
+            <Alert v-if="!canChangeUsername" type="warning" show-icon style="margin-top: 10px">
+              You can only change your username once every 30 days. 
+              <template v-if="daysUntilNextChange > 0">
+                Next change available in {{ daysUntilNextChange }} days.
+              </template>
+            </Alert>
+          </FormItem>
           <FormItem label="Real Name">
             <Input v-model="formProfile.real_name"/>
           </FormItem>
@@ -98,32 +52,75 @@
         </Col>
       </Row>
     </Form>
+
+    <!-- Username Change Modal -->
+    <Modal 
+      v-model="showUsernameModal"
+      title="Change Username"
+      :loading="loadingUsernameBtn"
+      @on-ok="changeUsername">
+      <Alert type="warning" show-icon>
+        <template slot="desc">
+          <p>• You can only change your username once every 30 days</p>
+          <p>• Your old username will become available for others to use</p>
+          <p>• All your submissions and data will remain with your account</p>
+          <p>• You will need to use your new username to login</p>
+        </template>
+      </Alert>
+      <Form ref="formUsername" :model="formUsername" :rules="usernameRules" style="margin-top: 20px">
+        <FormItem label="Current Username">
+          <Input v-model="currentUsername" disabled/>
+        </FormItem>
+        <FormItem label="New Username" prop="new_username">
+          <Input v-model="formUsername.new_username" placeholder="Enter new username">
+            <Icon slot="prefix" type="person"></Icon>
+          </Input>
+        </FormItem>
+        <FormItem label="Confirm Password" prop="password" :rules="passwordRule">
+          <Input v-model="formUsername.password" type="password" placeholder="Enter your password to confirm">
+            <Icon slot="prefix" type="locked"></Icon>
+          </Input>
+        </FormItem>
+      </Form>
+    </Modal>
   </div>
 </template>
 
 <script>
   import api from '@oj/api'
   import utils from '@/utils/utils'
-  import {VueCropper} from 'vue-cropper'
-  import {types} from '@/store'
+  import { useUserStore } from '@/stores/user'
   import {languages} from '@/i18n'
+  import AvatarUpload from '@/pages/oj/components/AvatarUpload.vue'
 
   export default {
     components: {
-      VueCropper
+      AvatarUpload
     },
     data () {
+      const checkUsername = (rule, value, callback) => {
+        if (!value) {
+          return callback(new Error('Username is required'))
+        }
+        if (value.length < 3 || value.length > 20) {
+          return callback(new Error('Username must be between 3 and 20 characters'))
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+          return callback(new Error('Username can only contain letters, numbers, and underscores'))
+        }
+        if (value === this.currentUsername) {
+          return callback(new Error('New username must be different from current username'))
+        }
+        callback()
+      }
+      
       return {
         loadingSaveBtn: false,
-        loadingUploadBtn: false,
-        uploadModalVisible: false,
-        preview: {},
-        uploadImgSrc: '',
-        avatarOption: {
-          imgSrc: '',
-          size: 0.8,
-          outputType: 'png'
-        },
+        loadingUsernameBtn: false,
+        showUsernameModal: false,
+        currentUsername: '',
+        canChangeUsername: true,
+        daysUntilNextChange: 0,
         languages: languages,
         formProfile: {
           real_name: '',
@@ -133,163 +130,109 @@
           school: '',
           github: '',
           language: ''
-        }
+        },
+        formUsername: {
+          new_username: '',
+          password: ''
+        },
+        usernameRules: {
+          new_username: [
+            { validator: checkUsername, trigger: 'blur' }
+          ]
+        },
+        passwordRule: [
+          { required: true, message: 'Password is required', trigger: 'blur' },
+          { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
+        ]
       }
     },
     mounted () {
-      let profile = this.$store.state.user.profile
+      const userStore = useUserStore()
+      let profile = userStore.profile
       Object.keys(this.formProfile).forEach(element => {
         if (profile[element] !== undefined) {
           this.formProfile[element] = profile[element]
         }
       })
+      // Set current username
+      this.currentUsername = userStore.user?.username || profile.user?.username || ''
+      // Check if username can be changed (implement based on backend logic)
+      this.checkUsernameChangeEligibility()
     },
     methods: {
-      checkFileType (file) {
-        if (!/\.(gif|jpg|jpeg|png|bmp|GIF|JPG|PNG)$/.test(file.name)) {
-          this.$Notice.warning({
-            title: 'File type not support',
-            desc: 'The format of ' + file.name + ' is incorrect ，please choose image only.'
-          })
-          return false
-        }
-        return true
-      },
-      checkFileSize (file) {
-        // max size is 2MB
-        if (file.size > 2 * 1024 * 1024) {
-          this.$Notice.warning({
-            title: 'Exceed max size limit',
-            desc: 'File ' + file.name + ' is too big, you can upload a image up to 2MB in size'
-          })
-          return false
-        }
-        return true
-      },
-      handleSelectFile (file) {
-        let isOk = this.checkFileType(file) && this.checkFileSize(file)
-        if (!isOk) {
-          return false
-        }
-        let reader = new window.FileReader()
-        reader.onload = (e) => {
-          this.avatarOption.imgSrc = e.target.result
-        }
-        reader.readAsDataURL(file)
-        return false
-      },
-      realTime (data) {
-        this.preview = data
-      },
-      rotate (direction) {
-        if (direction === 'left') {
-          this.$refs.cropper.rotateLeft()
-        } else {
-          this.$refs.cropper.rotateRight()
-        }
-      },
-      reselect () {
-        this.$Modal.confirm({
-          content: 'Are you sure to disgard the changes?',
-          onOk: () => {
-            this.avatarOption.imgSrc = ''
-          }
-        })
-      },
-      finishCrop () {
-        this.$refs.cropper.getCropData(data => {
-          this.uploadImgSrc = data
-          this.uploadModalVisible = true
-        })
-      },
-      uploadAvatar () {
-        this.$refs.cropper.getCropBlob(blob => {
-          let form = new window.FormData()
-          let file = new window.File([blob], 'avatar.' + this.avatarOption.outputType)
-          form.append('image', file)
-          this.loadingUploadBtn = true
-          this.$http({
-            method: 'post',
-            url: 'upload_avatar',
-            data: form,
-            headers: {'content-type': 'multipart/form-data'}
-          }).then(res => {
-            this.loadingUploadBtn = false
-            this.$success('Successfully set new avatar')
-            this.uploadModalVisible = false
-            this.avatarOption.imgSrc = ''
-            this.$store.dispatch('getProfile')
-          }, () => {
-            this.loadingUploadBtn = false
-          })
-        })
-      },
       updateProfile () {
         this.loadingSaveBtn = true
         let updateData = utils.filterEmptyValue(Object.assign({}, this.formProfile))
         api.updateProfile(updateData).then(res => {
           this.$success('Success')
-          this.$store.commit(types.CHANGE_PROFILE, {profile: res.data.data})
+          const userStore = useUserStore()
+          userStore.updateProfile(res.data.data)
           this.loadingSaveBtn = false
         }, _ => {
           this.loadingSaveBtn = false
         })
-      }
-    },
-    computed: {
-      previewStyle () {
-        return {
-          'width': this.preview.w + 'px',
-          'height': this.preview.h + 'px',
-          'overflow': 'hidden'
-        }
+      },
+      checkUsernameChangeEligibility () {
+        // Check if user has changed username recently
+        // This would typically come from the backend
+        // For now, we'll assume they can change it
+        // You may want to add an API endpoint to check this
+        api.getUserInfo(this.currentUsername).then(res => {
+          const lastUsernameChange = res.data.data.last_username_change
+          if (lastUsernameChange) {
+            const daysSinceChange = Math.floor((new Date() - new Date(lastUsernameChange)) / (1000 * 60 * 60 * 24))
+            if (daysSinceChange < 30) {
+              this.canChangeUsername = false
+              this.daysUntilNextChange = 30 - daysSinceChange
+            }
+          }
+        }).catch(() => {
+          // If API doesn't support this yet, assume user can change
+          this.canChangeUsername = true
+        })
+      },
+      changeUsername () {
+        this.$refs.formUsername.validate((valid) => {
+          if (valid) {
+            this.loadingUsernameBtn = true
+            api.changeUsername({
+              new_username: this.formUsername.new_username,
+              password: this.formUsername.password
+            }).then(res => {
+              this.loadingUsernameBtn = false
+              this.$success('Username changed successfully! You will be logged out in 5 seconds...')
+              this.showUsernameModal = false
+              // Update local username
+              this.currentUsername = this.formUsername.new_username
+              // Clear form
+              this.formUsername = {
+                new_username: '',
+                password: ''
+              }
+              // Log out after 5 seconds
+              setTimeout(() => {
+                const userStore = useUserStore()
+                userStore.logout()
+                this.$router.push({name: 'login'})
+              }, 5000)
+            }).catch(err => {
+              this.loadingUsernameBtn = false
+              this.$error(err.data?.data || 'Failed to change username')
+            })
+          } else {
+            return false
+          }
+        })
       }
     }
   }
 </script>
 
 <style lang="less" scoped>
-  .inline {
-    display: inline-block;
-  }
-
-  .copper-img {
-    width: 400px;
-    height: 300px;
-  }
-
-  .flex-container {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    margin-bottom: 10px;
-    .cropper-main {
-      flex: none;
-      .copper-img;
-    }
-    .cropper-btn {
-      flex: none;
-      vertical-align: top;
-    }
-    .cropper-preview {
-      flex: none;
-      /*margin: 10px;*/
-      margin-left: 20px;
-      box-shadow: 0 0 1px 0;
-      .copper-img;
-    }
-  }
-
-  .upload-modal {
-    .notice {
-      font-size: 16px;
-      display: inline-block;
-      vertical-align: top;
-      padding: 10px;
-      padding-right: 15px;
-    }
-    img {
-      box-shadow: 0 0 1px 0;
-      border-radius: 50%;
+  // Profile settings styles
+  .setting-main {
+    .section-title {
+      margin-bottom: 20px;
     }
   }
 </style>

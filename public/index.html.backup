@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnlineJudge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .link-button {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background-color: #409eff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .link-button:hover {
+            background-color: #337ecc;
+        }
+        .admin-button {
+            background-color: #67c23a;
+        }
+        .admin-button:hover {
+            background-color: #529b2e;
+        }
+    </style>
+</head>
+<body>
+    <h1>OnlineJudge Development Portal</h1>
+    <p>Choose which part of the application you want to access:</p>
+    
+    <div>
+        <a href="/src/pages/oj/index.html" class="link-button">
+            🏆 Online Judge (Main Site)
+        </a>
+        
+        <a href="/src/pages/admin/index.html" class="link-button admin-button">
+            ⚙️ Admin Panel
+        </a>
+    </div>
+    
+    <hr style="margin: 40px 0;">
+    
+    <h3>Direct Links for Development:</h3>
+    <ul style="text-align: left; display: inline-block;">
+        <li><strong>Main Site:</strong> <a href="/src/pages/oj/index.html">http://localhost:8080/src/pages/oj/index.html</a></li>
+        <li><strong>Admin Panel:</strong> <a href="/src/pages/admin/index.html">http://localhost:8080/src/pages/admin/index.html</a></li>
+    </ul>
+    
+    <p><em>Note: These are development URLs. In production, use /admin for admin panel.</em></p>
+</body>
+</html>

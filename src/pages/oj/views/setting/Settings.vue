@@ -33,17 +33,24 @@
   </div>
 </template>
 <script>
-  import { mapGetters } from 'vuex'
+  import { computed } from 'vue'
+  import { useUserStore } from '@/stores/user'
 
   export default {
     name: 'profile',
+    setup() {
+      const userStore = useUserStore()
+      
+      return {
+        profile: computed(() => userStore.profile)
+      }
+    },
     methods: {
       goRoute (routePath) {
         this.$router.push(routePath)
       }
     },
     computed: {
-      ...mapGetters(['profile']),
       activeName () {
         return this.$route.path
       }

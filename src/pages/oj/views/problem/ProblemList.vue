@@ -2,27 +2,30 @@
   <Row type="flex" :gutter="18">
     <Col :span=19>
     <Panel shadow>
-      <div slot="title">{{$t('m.Problem_List')}}</div>
-      <div slot="extra">
+      <template #title>{{$t('m.Problem_List')}}</template>
+      <template #extra>
         <ul class="filter">
           <li>
-            <Dropdown @on-click="filterByDifficulty">
-              <span>{{query.difficulty === '' ? this.$i18n.t('m.Difficulty') : this.$i18n.t('m.' + query.difficulty)}}
-                <Icon type="arrow-down-b"></Icon>
-              </span>
-              <Dropdown-menu slot="list">
-                <Dropdown-item name="">{{$t('m.All')}}</Dropdown-item>
-                <Dropdown-item name="Low">{{$t('m.Low')}}</Dropdown-item>
-                <Dropdown-item name="Mid" >{{$t('m.Mid')}}</Dropdown-item>
-                <Dropdown-item name="High">{{$t('m.High')}}</Dropdown-item>
-              </Dropdown-menu>
+            <Dropdown @on-click="filterByDifficulty" transfer>
+              <a href="javascript:void(0)">
+                {{query.difficulty === '' ? this.$i18n.t('m.Difficulty') : this.$i18n.t('m.' + query.difficulty)}}
+                <Icon type="ios-arrow-down"></Icon>
+              </a>
+              <template #list>
+                <DropdownMenu>
+                  <DropdownItem name="">{{$t('m.All')}}</DropdownItem>
+                  <DropdownItem name="Low">{{$t('m.Low')}}</DropdownItem>
+                  <DropdownItem name="Mid" >{{$t('m.Mid')}}</DropdownItem>
+                  <DropdownItem name="High">{{$t('m.High')}}</DropdownItem>
+                </DropdownMenu>
+              </template>
             </Dropdown>
           </li>
           <li>
-            <i-switch size="large" @on-change="handleTagsVisible">
-              <span slot="open">{{$t('m.Tags')}}</span>
-              <span slot="close">{{$t('m.Tags')}}</span>
-            </i-switch>
+            <Switch size="large" @on-change="handleTagsVisible">
+              <template #open>{{$t('m.Tags')}}</template>
+              <template #close>{{$t('m.Tags')}}</template>
+            </Switch>
           </li>
           <li>
             <Input v-model="query.keyword"
@@ -38,25 +41,27 @@
             </Button>
           </li>
         </ul>
-      </div>
+      </template>
       <Table style="width: 100%; font-size: 16px;"
              :columns="problemTableColumns"
              :data="problemList"
              :loading="loadings.table"
              disabled-hover></Table>
     </Panel>
-    <Pagination
-      :total="total" :page-size.sync="query.limit" @on-change="pushRouter" @on-page-size-change="pushRouter" :current.sync="query.page" :show-sizer="true"></Pagination>
+    <pagination
+      :total="total" v-model:page-size="query.limit" @on-change="pushRouter" @on-page-size-change="pushRouter" v-model:current="query.page" :show-sizer="true"></pagination>
 
     </Col>
 
     <Col :span="5">
     <Panel :padding="10">
-      <div slot="title" class="taglist-title">{{$t('m.Tags')}}</div>
+      <template #title>
+        <div class="taglist-title">{{$t('m.Tags')}}</div>
+      </template>
       <Button v-for="tag in tagList"
               :key="tag.name"
               @click="filterByTag(tag.name)"
-              type="ghost"
+              type="default"
               :disabled="query.tag === tag.name"
               shape="circle"
               class="tag-btn">{{tag.name}}
@@ -73,17 +78,19 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
+  import { useUserStore } from '@/stores/user'
   import api from '@oj/api'
   import utils from '@/utils/utils'
   import { ProblemMixin } from '@oj/components/mixins'
   import Pagination from '@oj/components/Pagination'
+  import Panel from '@oj/components/Panel.vue'
 
   export default {
     name: 'ProblemList',
     mixins: [ProblemMixin],
     components: {
-      Pagination
+      Pagination,
+      Panel
     },
     data () {
       return {
@@ -94,18 +101,15 @@
             key: '_id',
             width: 80,
             render: (h, params) => {
-              return h('Button', {
-                props: {
-                  type: 'text',
-                  size: 'large'
-                },
-                on: {
-                  click: () => {
-                    this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
-                  }
-                },
+              return h('a', {
                 style: {
-                  padding: '2px 0'
+                  color: '#2d8cf0',
+                  cursor: 'pointer',
+                  textDecoration: 'none'
+                },
+                onClick: (e) => {
+                  e.preventDefault()
+                  this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
                 }
               }, params.row._id)
             }
@@ -114,21 +118,17 @@
             title: this.$i18n.t('m.Title'),
             width: 400,
             render: (h, params) => {
-              return h('Button', {
-                props: {
-                  type: 'text',
-                  size: 'large'
-                },
-                on: {
-                  click: () => {
-                    this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
-                  }
-                },
+              return h('a', {
                 style: {
-                  padding: '2px 0',
-                  overflowX: 'auto',
-                  textAlign: 'left',
+                  color: '#2d8cf0',
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  display: 'block',
                   width: '100%'
+                },
+                onClick: (e) => {
+                  e.preventDefault()
+                  this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
                 }
               }, params.row.title)
             }
@@ -270,7 +270,10 @@
       }
     },
     computed: {
-      ...mapGetters(['isAuthenticated'])
+      isAuthenticated() {
+        const userStore = useUserStore()
+        return userStore.isAuthenticated
+      }
     },
     watch: {
       '$route' (newVal, oldVal) {
@@ -296,9 +299,35 @@
   .tag-btn {
     margin-right: 5px;
     margin-bottom: 10px;
+    
+    &:not(:disabled) {
+      border-color: #dcdfe6;
+      color: #606266;
+      
+      &:hover {
+        color: #409eff;
+        border-color: #c6e2ff;
+        background-color: #ecf5ff;
+      }
+    }
+    
+    &:disabled {
+      background-color: #409eff !important;
+      color: #fff !important;
+      border-color: #409eff !important;
+    }
   }
 
   #pick-one {
     margin-top: 10px;
+  }
+
+  // Style for problem links in table
+  :deep(.ivu-table) {
+    a {
+      &:hover {
+        color: #57a3f3;
+      }
+    }
   }
 </style>

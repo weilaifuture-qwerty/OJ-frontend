@@ -2,30 +2,40 @@
 <div>
     <Form ref="formRegister" :model="formRegister" :rules="ruleRegister">
       <FormItem prop="username">
-        <Input type="text" v-model="formRegister.username" :placeholder="$t('m.RegisterUsername')" size="large" @on-enter="handleRegister">
-        <Icon type="ios-person-outline" slot="prepend"></Icon>
+        <Input type="text" v-model="formRegister.username" :placeholder="$t('m.RegisterUsername')" size="large" @keyup.enter="handleRegister">
+          <template #prefix>
+            <Icon type="md-person" />
+          </template>
         </Input>
       </FormItem>
       <FormItem prop="email">
-        <Input v-model="formRegister.email" :placeholder="$t('m.Email_Address')" size="large" @on-enter="handleRegister">
-        <Icon type="ios-email-outline" slot="prepend"></Icon>
+        <Input v-model="formRegister.email" :placeholder="$t('m.Email_Address')" size="large" @keyup.enter="handleRegister">
+          <template #prefix>
+            <Icon type="md-mail" />
+          </template>
         </Input>
       </FormItem>
       <FormItem prop="password">
-        <Input type="password" v-model="formRegister.password" :placeholder="$t('m.RegisterPassword')" size="large" @on-enter="handleRegister">
-        <Icon type="ios-locked-outline" slot="prepend"></Icon>
+        <Input type="password" v-model="formRegister.password" :placeholder="$t('m.RegisterPassword')" size="large" @keyup.enter="handleRegister">
+          <template #prefix>
+            <Icon type="md-lock" />
+          </template>
         </Input>
       </FormItem>
       <FormItem prop="passwordAgain">
-        <Input type="password" v-model="formRegister.passwordAgain" :placeholder="$t('m.Password_Again')" size="large" @on-enter="handleRegister">
-        <Icon type="ios-locked-outline" slot="prepend"></Icon>
+        <Input type="password" v-model="formRegister.passwordAgain" :placeholder="$t('m.Password_Again')" size="large" @keyup.enter="handleRegister">
+          <template #prefix>
+            <Icon type="md-lock" />
+          </template>
         </Input>
       </FormItem>
       <FormItem prop="captcha" style="margin-bottom:10px">
         <div class="oj-captcha">
           <div class="oj-captcha-code">
-            <Input v-model="formRegister.captcha" :placeholder="$t('m.Captcha')" size="large" @on-enter="handleRegister">
-            <Icon type="ios-lightbulb-outline" slot="prepend"></Icon>
+            <Input v-model="formRegister.captcha" :placeholder="$t('m.Captcha')" size="large" @keyup.enter="handleRegister">
+              <template #prefix>
+                <Icon type="md-bulb" />
+              </template>
             </Input>
           </div>
           <div class="oj-captcha-img">
@@ -55,12 +65,22 @@
 </template>
 
 <script>
-  import { mapGetters, mapActions } from 'vuex'
+  import { useUserStore } from '@/stores/user'
+  import { useWebsiteStore } from '@/stores/website'
   import api from '@oj/api'
-  import { FormMixin } from '@oj/components/mixins'
+  import { Message } from 'view-ui-plus'
 
   export default {
-    mixins: [FormMixin],
+    name: 'Register',
+    setup() {
+      const userStore = useUserStore()
+      const websiteStore = useWebsiteStore()
+      
+      return {
+        userStore,
+        websiteStore
+      }
+    },
     mounted () {
       this.getCaptchaSrc()
     },
@@ -100,6 +120,7 @@
 
       return {
         btnRegisterLoading: false,
+        captchaSrc: '',
         formRegister: {
           username: '',
           password: '',
@@ -130,33 +151,45 @@
       }
     },
     methods: {
-      ...mapActions(['changeModalStatus', 'getProfile']),
+      getCaptchaSrc() {
+        api.getCaptcha().then(res => {
+          this.captchaSrc = res.data
+        })
+      },
       switchMode (mode) {
-        this.changeModalStatus({
+        this.userStore.changeModalStatus({
           mode,
           visible: true
         })
       },
       handleRegister () {
-        this.validateForm('formRegister').then(valid => {
+        this.$refs.formRegister.validate(async (valid) => {
+          if (!valid) {
+            return
+          }
           let formData = Object.assign({}, this.formRegister)
           delete formData['passwordAgain']
           this.btnRegisterLoading = true
-          api.register(formData).then(res => {
-            this.$success(this.$i18n.t('m.Thanks_for_registering'))
+          try {
+            await api.register(formData)
+            Message.success(this.$i18n.t('m.Thanks_for_registering'))
             this.switchMode('login')
-            this.btnRegisterLoading = false
-          }, _ => {
+          } catch (error) {
             this.getCaptchaSrc()
             this.formRegister.captcha = ''
+          } finally {
             this.btnRegisterLoading = false
-          })
+          }
         })
       }
     },
     computed: {
-      ...mapGetters(['website', 'modalStatus'])
-
+      website() {
+        return this.websiteStore.website
+      },
+      modalStatus() {
+        return this.userStore.modalStatus
+      }
     }
   }
 </script>

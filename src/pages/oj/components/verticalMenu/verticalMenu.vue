@@ -8,7 +8,19 @@
 
 <script>
   export default {
-    name: 'VerticalMenu'
+    name: 'VerticalMenu',
+    provide() {
+      return {
+        rootMenu: this,
+        getActiveKey: () => null // Provide a dummy function to prevent errors
+      }
+    },
+    emits: ['on-click'],
+    methods: {
+      handleItemClick(route) {
+        this.$emit('on-click', route)
+      }
+    }
   }
 </script>
 

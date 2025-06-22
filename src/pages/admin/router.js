@@ -1,14 +1,13 @@
-import Vue from 'vue'
-import VueRouter from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
+import { useAdminStore } from '@/stores/admin'
 // 引入 view 组件
 import { Announcement, Conf, Contest, ContestList, Home, JudgeServer, Login,
-  Problem, ProblemList, User, PruneTestCase, Dashboard, ProblemImportOrExport } from './views'
-Vue.use(VueRouter)
+  Problem, ProblemList, User, PruneTestCase, Dashboard, ProblemImportOrExport,
+  AdminStudentManagement, HomeworkList, CreateEditHomework } from './views'
 
-export default new VueRouter({
-  mode: 'history',
-  base: '/admin/',
-  scrollBehavior: () => ({y: 0}),
+const router = createRouter({
+  history: createWebHistory('/admin/'),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     {
       path: '/login',
@@ -103,11 +102,71 @@ export default new VueRouter({
           path: '/contest/:contestId/problem/:problemId/edit',
           name: 'edit-contest-problem',
           component: Problem
+        },
+        // Homework System Routes
+        {
+          path: '/homework/admin-student',
+          name: 'admin-student-management',
+          component: AdminStudentManagement
+        },
+        {
+          path: '/homework',
+          name: 'admin-homework-list',
+          component: HomeworkList
+        },
+        {
+          path: '/homework/create',
+          name: 'admin-create-homework',
+          component: CreateEditHomework
+        },
+        {
+          path: '/homework/:id/edit',
+          name: 'admin-edit-homework',
+          component: CreateEditHomework
+        },
+        {
+          path: '/homework/:id/assign',
+          name: 'admin-assign-homework',
+          component: HomeworkList  // We'll create a separate assign component later
+        },
+        {
+          path: '/homework/:id/progress',
+          name: 'admin-homework-progress',
+          component: HomeworkList  // We'll create a separate progress component later
+        },
+        {
+          path: '/homework/:id/detail',
+          name: 'admin-homework-detail',
+          component: HomeworkList  // We'll create a separate detail component later
         }
       ]
     },
     {
-      path: '*', redirect: '/login'
+      path: '/:pathMatch(.*)*', redirect: '/login'
     }
   ]
 })
+
+// Navigation guard
+router.beforeEach(async (to, from, next) => {
+  if (to.name === 'login') {
+    // Always allow access to login page
+    next()
+  } else {
+    // Check if user is authenticated
+    const adminStore = useAdminStore()
+    if (!adminStore.isAuthenticated) {
+      try {
+        await adminStore.getProfile()
+        next()
+      } catch (error) {
+        // Not authenticated, redirect to login
+        next({ name: 'login' })
+      }
+    } else {
+      next()
+    }
+  }
+})
+
+export default router

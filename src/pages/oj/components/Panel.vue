@@ -1,11 +1,15 @@
 <template>
   <Card :padding="padding" :shadow="shadow" :dis-hover="disHover" :bordered="bordered">
-    <div slot="title" class="panel-title">
-      <slot name="title"></slot>
-    </div>
-    <div slot="extra" class="panel-extra">
-      <slot name="extra"></slot>
-    </div>
+    <template #title>
+      <div class="panel-title">
+        <slot name="title"></slot>
+      </div>
+    </template>
+    <template #extra>
+      <div class="panel-extra">
+        <slot name="extra"></slot>
+      </div>
+    </template>
     <div class="panel-body">
       <slot></slot>
     </div>
@@ -44,24 +48,31 @@
   @import (reference) '../../../styles/common.less';
 
   .panel-title {
-    .section-title;
-    padding: 5px 15px;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1;
   }
 
   .panel-extra {
-    line-height: 40px;
+    line-height: 32px;
     .ivu-input-icon {
-      line-height: 40px;
+      line-height: 32px;
     }
     ul.filter {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: inline-block;
       > li {
         display: inline-block;
         padding: 0 10px;
+        vertical-align: middle;
       }
     }
   }
   .panel-body {
-    word-break: break-all;
+    word-break: break-word;
     word-wrap: break-word;
+    padding: 16px;
   }
 </style>

@@ -11,8 +11,13 @@ import Contest from './contest/Contest.vue'
 import Login from './general/Login.vue'
 import Home from './Home.vue'
 import ProblemImportOrExport from './problem/ImportAndExport.vue'
+// Homework System Components
+import AdminStudentManagement from './homework/AdminStudentManagement.vue'
+import HomeworkList from './homework/HomeworkList.vue'
+import CreateEditHomework from './homework/CreateEditHomework.vue'
 
 export {
   Announcement, User, Conf, JudgeServer, Problem, ProblemList, Contest,
-  ContestList, Login, Home, PruneTestCase, Dashboard, ProblemImportOrExport
+  ContestList, Login, Home, PruneTestCase, Dashboard, ProblemImportOrExport,
+  AdminStudentManagement, HomeworkList, CreateEditHomework
 }

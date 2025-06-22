@@ -50,13 +50,10 @@
 
 <style scoped lang="less">
   .page {
-    margin: 20px;
-    float: right;
-  }
-</style>
-
-<style lang="less">
-  .ivu-page-options-sizer {
-    min-width: 85px;
+    margin: 20px 0;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 </style>

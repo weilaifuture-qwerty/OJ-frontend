@@ -2,9 +2,7 @@
   <div>
     <NavBar></NavBar>
     <div class="content-app">
-      <transition name="fadeInUp" mode="out-in">
-        <router-view></router-view>
-      </transition>
+      <router-view></router-view>
       <div class="footer">
         <p v-html="website.website_footer"></p>
         <p>Powered by <a href="https://github.com/QingdaoU/OnlineJudge">OnlineJudge</a>
@@ -12,13 +10,15 @@
         </p>
       </div>
     </div>
-    <BackTop></BackTop>
+    <!-- <BackTop></BackTop> -->
   </div>
 </template>
 
 <script>
-  import { mapActions, mapState } from 'vuex'
+  import { useWebsiteStore } from '@/stores/website'
+  import { useContestStore } from '@/stores/contest'
   import NavBar from '@oj/components/NavBar.vue'
+  import api from '@oj/api'
 
   export default {
     name: 'app',
@@ -27,7 +27,16 @@
     },
     data () {
       return {
-        version: process.env.VERSION
+        version: import.meta.env.VERSION
+      }
+    },
+    setup() {
+      const websiteStore = useWebsiteStore()
+      const contestStore = useContestStore()
+      
+      return {
+        websiteStore,
+        contestStore
       }
     },
     created () {
@@ -36,21 +45,29 @@
       } catch (e) {
       }
     },
-    mounted () {
-      this.getWebsiteConfig()
-    },
-    methods: {
-      ...mapActions(['getWebsiteConfig', 'changeDomTitle'])
+    async mounted () {
+      // Initialize session to get CSRF token
+      try {
+        // First, get CSRF token
+        await api.getCSRFToken()
+        
+        // Then get website config
+        await this.websiteStore.getWebsiteConfig()
+      } catch (error) {
+        console.error('Failed to initialize:', error)
+      }
     },
     computed: {
-      ...mapState(['website'])
+      website() {
+        return this.websiteStore.website
+      }
     },
     watch: {
       'website' () {
-        this.changeDomTitle()
+        this.contestStore.changeDomTitle({ title: this.website.website_name })
       },
       '$route' () {
-        this.changeDomTitle()
+        this.contestStore.changeDomTitle({ title: this.$route.meta.title || this.website.website_name })
       }
     }
   }

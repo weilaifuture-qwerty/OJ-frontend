@@ -37,8 +37,8 @@
         <el-table-column
           prop="create_time"
           label="Create Time">
-          <template slot-scope="scope">
-            {{scope.row.create_time | localtime }}
+          <template #default="scope">
+            {{$filters.localtime(scope.row.create_time)}}
           </template>
         </el-table-column>
       </el-table>

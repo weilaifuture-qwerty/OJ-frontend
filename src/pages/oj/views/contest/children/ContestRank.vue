@@ -5,8 +5,7 @@
 </template>
 
 <script>
-  import { mapGetters } from 'vuex'
-  import { types } from '../../../../../store'
+  import { useContestStore } from '@/stores/contest'
   import ACMContestRank from './ACMContestRank.vue'
   import OIContestRank from './OIContestRank.vue'
 
@@ -23,7 +22,10 @@
       NullComponent
     },
     computed: {
-      ...mapGetters(['contestRuleType']),
+      contestRuleType () {
+        const contestStore = useContestStore()
+        return contestStore.contestRuleType
+      },
       currentView () {
         if (this.contestRuleType === null) {
           return 'NullComponent'
@@ -32,7 +34,8 @@
       }
     },
     beforeRouteLeave (to, from, next) {
-      this.$store.commit(types.CHANGE_CONTEST_ITEM_VISIBLE, {menu: true})
+      const contestStore = useContestStore()
+      contestStore.changeContestItemVisible({menu: true})
       next()
     }
   }

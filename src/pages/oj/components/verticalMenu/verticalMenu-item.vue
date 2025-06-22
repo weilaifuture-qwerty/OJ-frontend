@@ -5,11 +5,9 @@
 </template>
 
 <script>
-  import Emitter from '../mixins/emitter'
-
   export default {
     name: 'VerticalMenu-item',
-    mixins: [Emitter],
+    inject: ['rootMenu'],
     props: {
       route: {
         type: [String, Object]
@@ -21,8 +19,8 @@
     },
     methods: {
       handleClick () {
-        if (this.route) {
-          this.dispatch('VerticalMenu', 'on-click', this.route)
+        if (this.route && !this.disabled && this.rootMenu) {
+          this.rootMenu.handleItemClick(this.route)
         }
       }
     }

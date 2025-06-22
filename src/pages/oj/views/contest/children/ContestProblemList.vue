@@ -1,28 +1,33 @@
 <template>
   <div>
     <Panel>
-      <div slot="title">{{$t('m.Problems_List')}}</div>
+      <template #title>{{$t('m.Problems_List')}}</template>
       <Table v-if="contestRuleType == 'ACM' || OIContestRealTimePermission"
              :columns="ACMTableColumns"
              :data="problems"
-             @on-row-click="goContestProblem"
+             @row-click="goContestProblem"
              :no-data-text="$t('m.No_Problems')"></Table>
       <Table v-else
              :data="problems"
              :columns="OITableColumns"
-             @on-row-click="goContestProblem"
+             @row-click="goContestProblem"
              no-data-text="$t('m.No_Problems')"></Table>
     </Panel>
   </div>
 </template>
 
 <script>
-  import {mapState, mapGetters} from 'vuex'
+  import { useContestStore } from '@/stores/contest'
+  import { useUserStore } from '@/stores/user'
   import {ProblemMixin} from '@oj/components/mixins'
+  import Panel from '@/pages/oj/components/Panel.vue'
 
   export default {
     name: 'ContestProblemList',
     mixins: [ProblemMixin],
+    components: {
+      Panel
+    },
     data () {
       return {
         ACMTableColumns: [
@@ -65,12 +70,13 @@
     },
     methods: {
       getContestProblems () {
-        this.$store.dispatch('getContestProblems').then(res => {
+        const contestStore = useContestStore()
+        contestStore.getContestProblems(this.$route.params.contestID).then(() => {
           if (this.isAuthenticated) {
             if (this.contestRuleType === 'ACM') {
-              this.addStatusColumn(this.ACMTableColumns, res.data.data)
+              this.addStatusColumn(this.ACMTableColumns, contestStore.contestProblems)
             } else if (this.OIContestRealTimePermission) {
-              this.addStatusColumn(this.ACMTableColumns, res.data.data)
+              this.addStatusColumn(this.ACMTableColumns, contestStore.contestProblems)
             }
           }
         })
@@ -86,10 +92,22 @@
       }
     },
     computed: {
-      ...mapState({
-        problems: state => state.contest.contestProblems
-      }),
-      ...mapGetters(['isAuthenticated', 'contestRuleType', 'OIContestRealTimePermission'])
+      problems () {
+        const contestStore = useContestStore()
+        return contestStore.contestProblems
+      },
+      isAuthenticated () {
+        const userStore = useUserStore()
+        return userStore.isAuthenticated
+      },
+      contestRuleType () {
+        const contestStore = useContestStore()
+        return contestStore.contestRuleType
+      },
+      OIContestRealTimePermission () {
+        const contestStore = useContestStore()
+        return contestStore.OIContestRealTimePermission
+      }
     }
   }
 </script>

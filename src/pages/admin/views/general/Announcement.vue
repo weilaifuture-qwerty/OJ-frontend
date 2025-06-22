@@ -20,15 +20,15 @@
           <el-table-column
             prop="create_time"
             label="CreateTime">
-            <template slot-scope="scope">
-              {{ scope.row.create_time | localtime }}
+            <template #default="scope">
+              {{ $filters.localtime(scope.row.create_time) }}
             </template>
           </el-table-column>
           <el-table-column
             prop="last_update_time"
             label="LastUpdateTime">
-            <template slot-scope="scope">
-              {{scope.row.last_update_time | localtime }}
+            <template #default="scope">
+              {{$filters.localtime(scope.row.last_update_time)}}
             </template>
           </el-table-column>
           <el-table-column
@@ -39,7 +39,7 @@
             width="100"
             prop="visible"
             label="Visible">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-switch v-model="scope.row.visible"
                          active-text=""
                          inactive-text=""
@@ -51,10 +51,10 @@
             fixed="right"
             label="Option"
             width="200">
-            <div slot-scope="scope">
+            <template #default="scope"><div>
               <icon-btn name="Edit" icon="edit" @click.native="openAnnouncementDialog(scope.row.id)"></icon-btn>
               <icon-btn name="Delete" icon="trash" @click.native="deleteAnnouncement(scope.row.id)"></icon-btn>
-            </div>
+            </div></template>
           </el-table-column>
         </el-table>
         <div class="panel-options">

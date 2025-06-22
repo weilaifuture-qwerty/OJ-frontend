@@ -1,0 +1,585 @@
+// ViewUI Plus Global Style Fixes
+// This file contains fixes for ViewUI Plus components to ensure proper styling
+
+// Global ViewUI Plus overrides
+.ivu-layout {
+  background: #f5f5f5;
+}
+
+// Table component fixes
+.ivu-table {
+  font-size: 14px;
+  
+  &-wrapper {
+    border: 1px solid #dcdee2;
+    border-radius: 4px;
+  }
+  
+  th {
+    background-color: #f8f8f9;
+    color: #515a6e;
+    font-weight: 600;
+    border-bottom: 1px solid #e8eaec;
+  }
+  
+  td {
+    border-bottom: 1px solid #e8eaec;
+  }
+  
+  &-row:hover {
+    td {
+      background-color: #f5f7fa;
+    }
+  }
+}
+
+// Button component fixes
+.ivu-btn {
+  font-weight: 400;
+  transition: all .2s ease-in-out;
+  
+  &-primary {
+    background-color: #2d8cf0;
+    border-color: #2d8cf0;
+    
+    &:hover {
+      background-color: #57a3f3;
+      border-color: #57a3f3;
+    }
+  }
+  
+  &-ghost {
+    color: #495060;
+    background-color: transparent;
+    border-color: #dcdee2;
+    
+    &:hover {
+      color: #2d8cf0;
+      border-color: #2d8cf0;
+    }
+  }
+  
+  &-text {
+    border: none;
+    color: #2d8cf0;
+    background-color: transparent;
+    
+    &:hover {
+      color: #57a3f3;
+    }
+  }
+}
+
+// Card/Panel component fixes
+.ivu-card {
+  background: #fff;
+  border-radius: 4px;
+  font-size: 14px;
+  position: relative;
+  transition: all .2s ease-in-out;
+  
+  &-bordered {
+    border: 1px solid #dcdee2;
+  }
+  
+  &-shadow {
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+  }
+  
+  &-head {
+    border-bottom: 1px solid #e8eaec;
+    padding: 14px 16px;
+    line-height: 1;
+    
+    p {
+      display: inline-block;
+      width: 100%;
+      height: 20px;
+      line-height: 20px;
+      font-size: 16px;
+      color: #17233d;
+      font-weight: 500;
+      margin: 0;
+    }
+  }
+  
+  &-body {
+    padding: 16px;
+  }
+}
+
+// Input component fixes
+.ivu-input {
+  &-wrapper {
+    display: inline-block;
+    width: 100%;
+    position: relative;
+    vertical-align: middle;
+  }
+  
+  .ivu-input {
+    height: 32px;
+    line-height: 1.5;
+    padding: 4px 7px;
+    font-size: 14px;
+    border: 1px solid #dcdee2;
+    border-radius: 4px;
+    color: #515a6e;
+    background-color: #fff;
+    transition: border .2s ease-in-out,background .2s ease-in-out,box-shadow .2s ease-in-out;
+    
+    &:hover {
+      border-color: #57a3f3;
+    }
+    
+    &:focus {
+      border-color: #57a3f3;
+      outline: 0;
+      box-shadow: 0 0 0 2px rgba(45,140,240,.2);
+    }
+  }
+}
+
+// Dropdown component fixes
+.ivu-dropdown {
+  &-menu {
+    margin: 5px 0;
+    padding: 5px 0;
+    background-color: #fff;
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+    position: absolute;
+    z-index: 900;
+  }
+  
+  &-item {
+    padding: 7px 16px;
+    clear: both;
+    color: #515a6e;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .2s ease-in-out;
+    
+    &:hover {
+      background-color: #f3f3f3;
+    }
+  }
+}
+
+// Tag component fixes
+.ivu-tag {
+  display: inline-block;
+  height: 22px;
+  line-height: 22px;
+  margin: 2px 4px 2px 0;
+  padding: 0 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  vertical-align: middle;
+  opacity: 1;
+  overflow: hidden;
+  border: 1px solid transparent;
+  
+  &-color {
+    &-blue {
+      color: #2d8cf0;
+      border-color: #b7d9ff;
+      background-color: #e8f4ff;
+    }
+    
+    &-green {
+      color: #19be6b;
+      border-color: #a8ecce;
+      background-color: #e5f8f0;
+    }
+    
+    &-yellow {
+      color: #ff9900;
+      border-color: #ffe3b3;
+      background-color: #fff5e6;
+    }
+  }
+}
+
+// Switch component fixes
+.ivu-switch {
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+  line-height: 22px;
+  border-radius: 24px;
+  vertical-align: middle;
+  border: 1px solid #ccc;
+  background-color: #ccc;
+  position: relative;
+  cursor: pointer;
+  transition: all .2s ease-in-out;
+  
+  &-checked {
+    border-color: #2d8cf0;
+    background-color: #2d8cf0;
+  }
+  
+  &-inner {
+    color: #fff;
+    font-size: 12px;
+    position: absolute;
+    left: 25px;
+  }
+}
+
+// Spin component fixes
+.ivu-spin {
+  &-fix {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 8;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255,255,255,.9);
+  }
+  
+  &-main {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+// Pagination component - ensure compatibility
+.ivu-page {
+  display: inline-block;
+  margin: 20px 0;
+  font-size: 14px;
+  
+  &-item {
+    display: inline-block;
+    vertical-align: middle;
+    min-width: 36px;
+    height: 36px;
+    line-height: 36px;
+    margin: 0 4px;
+    padding: 0;
+    text-align: center;
+    list-style: none;
+    background-color: #fff;
+    user-select: none;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 400;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    transition: all .2s ease-in-out;
+    color: #606266;
+    box-sizing: border-box;
+    
+    a {
+      color: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      text-decoration: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    &:hover {
+      border-color: #d9d9d9;
+      color: #2d8cf0;
+      
+      a {
+        color: #2d8cf0;
+      }
+    }
+    
+    &-active {
+      background-color: #2d8cf0;
+      border-color: #2d8cf0;
+      color: #fff;
+      font-weight: 500;
+      
+      a {
+        color: #fff;
+      }
+      
+      &:hover {
+        background-color: #57a3f3;
+        border-color: #57a3f3;
+        color: #fff;
+        
+        a {
+          color: #fff;
+        }
+      }
+    }
+    
+    &-jump-prev, &-jump-next {
+      &:after {
+        content: "•••";
+        display: block;
+        letter-spacing: 2px;
+      }
+      
+      &:hover {
+        &:after {
+          color: #2d8cf0;
+        }
+      }
+    }
+  }
+  
+  // Previous and Next buttons
+  &-prev, &-next {
+    background-color: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    min-width: 36px;
+    height: 36px;
+    line-height: 36px;
+    margin: 0 4px;
+    padding: 0;
+    text-align: center;
+    font-size: 14px;
+    transition: all .2s ease-in-out;
+    box-sizing: border-box;
+    
+    a {
+      color: #666;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      text-decoration: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    &:hover {
+      border-color: #d9d9d9;
+      
+      a {
+        color: #2d8cf0;
+      }
+    }
+  }
+  
+  &-disabled {
+    cursor: not-allowed;
+    
+    a {
+      color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    &:hover {
+      border-color: #e8e8e8;
+      
+      a {
+        color: #ccc;
+      }
+    }
+  }
+  
+  // Page size options
+  &-options {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 15px;
+    
+    &-sizer {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    
+    &-elevator {
+      display: inline-block;
+      vertical-align: middle;
+      height: 36px;
+      line-height: 36px;
+      
+      input {
+        display: inline-block;
+        width: 50px;
+        height: 36px;
+        line-height: 1.5;
+        padding: 4px 7px;
+        font-size: 14px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        color: #333;
+        background-color: #fff;
+        background-image: none;
+        position: relative;
+        cursor: text;
+        transition: border .2s ease-in-out, background .2s ease-in-out, box-shadow .2s ease-in-out;
+        margin: 0 8px;
+        text-align: center;
+        
+        &:hover {
+          border-color: #d9d9d9;
+        }
+        
+        &:focus {
+          border-color: #57a3f3;
+          outline: 0;
+          box-shadow: 0 0 0 2px rgba(45, 140, 240, .2);
+        }
+      }
+    }
+  }
+  
+  // Total count
+  &-total {
+    display: inline-block;
+    height: 36px;
+    line-height: 36px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  
+  // Simple mode
+  &-simple &-item {
+    background-color: transparent;
+    border-color: transparent;
+    
+    &:hover {
+      background-color: transparent;
+      border-color: transparent;
+    }
+  }
+  
+  &-simple &-simple-pager {
+    display: inline-block;
+    vertical-align: middle;
+    width: 70px;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    font-size: 14px;
+    
+    input {
+      display: inline-block;
+      width: 100%;
+      height: 36px;
+      line-height: 1.5;
+      padding: 4px 7px;
+      font-size: 14px;
+      border: 1px solid #e8e8e8;
+      border-radius: 6px;
+      color: #333;
+      background-color: #fff;
+      text-align: center;
+      transition: border .2s ease-in-out;
+      
+      &:hover {
+        border-color: #d9d9d9;
+      }
+      
+      &:focus {
+        border-color: #57a3f3;
+        outline: 0;
+        box-shadow: 0 0 0 2px rgba(45, 140, 240, .2);
+      }
+    }
+    
+    span {
+      padding: 0 8px;
+      color: #999;
+    }
+  }
+}
+
+// Select component in pagination context
+.ivu-page-options-sizer {
+  display: inline-block;
+  margin-left: 8px;
+  
+  .ivu-select {
+    width: auto;
+    min-width: 110px;
+    
+    &-selection {
+      height: 36px;
+      line-height: 34px;
+      padding: 0 24px 0 8px;
+      display: block;
+      box-sizing: border-box;
+      outline: 0;
+      user-select: none;
+      cursor: pointer;
+      position: relative;
+      background-color: #fff;
+      border-radius: 6px;
+      border: 1px solid #e8e8e8;
+      transition: all .2s ease-in-out;
+      
+      &:hover {
+        border-color: #d9d9d9;
+      }
+    }
+    
+    &-selected-value {
+      display: block;
+      height: 34px;
+      line-height: 34px;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 24px;
+      color: #606266;
+    }
+    
+    &-arrow {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #808695;
+      transition: all .2s ease-in-out;
+    }
+    
+    &-dropdown {
+      background-color: #fff;
+      box-sizing: border-box;
+      border-radius: 6px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.2);
+      position: absolute;
+      z-index: 900;
+      
+      .ivu-select-item {
+        margin: 0;
+        line-height: normal;
+        padding: 7px 16px;
+        clear: both;
+        color: #515a6e;
+        font-size: 14px;
+        white-space: nowrap;
+        list-style: none;
+        cursor: pointer;
+        transition: background .2s ease-in-out;
+        
+        &:hover {
+          background-color: #f3f3f3;
+        }
+        
+        &-selected {
+          color: #2d8cf0;
+          background-color: #f0faff;
+        }
+      }
+    }
+  }
+}
