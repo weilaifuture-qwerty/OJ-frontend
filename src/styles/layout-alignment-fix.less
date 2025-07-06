@@ -1,0 +1,60 @@
+// Minimal fix for right-alignment issue
+// Only fix what's actually broken
+
+// Fix ViewUI Row components that use flex-center
+.ivu-row-flex-center {
+  justify-content: center;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+// Ensure content-app is centered
+.content-app {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+// Fix home container to ensure it's properly centered
+.home-container {
+  width: 100%;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  
+  .home-content {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+// Fix table layout issues
+.ivu-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ivu-table {
+  width: 100%;
+  table-layout: auto;
+}
+
+// Ensure cards are properly sized only in specific contexts
+.ivu-table-wrapper .ivu-card,
+.homework-index-container .ivu-card {
+  width: 100%;
+}
+
+// Fix homework page specific issues
+.homework-index-container,
+.admin-homework-list,
+.student-homework-container,
+.student-homework-wrapper,
+.student-homework-detail {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  
+  .ivu-card {
+    width: 100%;
+  }
+}

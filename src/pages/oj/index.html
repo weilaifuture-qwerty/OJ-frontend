@@ -9,6 +9,14 @@
   <link rel="shortcut icon" href="/public/website/favicon.ico">
 
   <link href="/static/css/loader.css" rel="stylesheet">
+  <style>
+    /* Critical layout fixes - prevent flash of misaligned content */
+    .content-app {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+  </style>
   <script>
     // IE 10 and earlier
     if (window.navigator.userAgent.indexOf('MSIE ') > 0 &&

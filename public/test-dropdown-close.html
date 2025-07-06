@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Dropdown Close</title>
+    <link rel="stylesheet" href="https://unpkg.com/view-ui-plus/dist/styles/viewuiplus.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/view-ui-plus/dist/viewuiplus.min.js"></script>
+    <style>
+        body {
+            padding: 50px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        /* Only set z-index, don't force visibility */
+        .ivu-select-dropdown {
+            z-index: 1060;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Select Dropdown Open/Close Test</h2>
+        
+        <div class="test-section">
+            <h3>Test 1: Basic Select</h3>
+            <i-select v-model="value1" style="width:200px" @on-open-change="onOpenChange">
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <p>Selected: {{ value1 }}</p>
+            <p>Dropdown is: {{ dropdownOpen ? 'OPEN' : 'CLOSED' }}</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Select with Transfer</h3>
+            <i-select v-model="value2" style="width:200px" transfer>
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <p>Selected: {{ value2 }}</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click on the select to open dropdown</li>
+                <li>Click on an option to select it - dropdown should close</li>
+                <li>Click on the select again to re-open</li>
+                <li>Click outside to close dropdown</li>
+                <li>Press ESC to close dropdown</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>Event Log:</h3>
+            <div style="height: 200px; overflow-y: auto; background: #f5f5f5; padding: 10px; font-family: monospace;">
+                <div v-for="(log, index) in logs" :key="index">{{ log }}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    value1: 'C++',
+                    value2: 'Python3',
+                    dropdownOpen: false,
+                    logs: []
+                }
+            },
+            methods: {
+                onOpenChange(status) {
+                    this.dropdownOpen = status;
+                    this.log(`Dropdown ${status ? 'opened' : 'closed'}`);
+                },
+                log(message) {
+                    const time = new Date().toLocaleTimeString();
+                    this.logs.unshift(`[${time}] ${message}`);
+                    if (this.logs.length > 20) {
+                        this.logs.pop();
+                    }
+                }
+            },
+            mounted() {
+                this.log('Component mounted');
+                
+                // Add global click listener to test outside clicks
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.ivu-select')) {
+                        this.log('Clicked outside select');
+                    }
+                });
+                
+                // Add ESC key listener
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.log('ESC key pressed');
+                    }
+                });
+            }
+        }).use(ViewUIPlus).mount('#app');
+    </script>
+</body>
+</html>

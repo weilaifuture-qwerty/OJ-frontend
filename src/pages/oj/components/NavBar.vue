@@ -16,7 +16,7 @@
       </MenuItem>
       <MenuItem name="/homework" v-if="isAuthenticated">
         <Icon type="md-book"></Icon>
-        {{$t('m.Homework')}}
+        {{$t('m.My_Homework')}}
       </MenuItem>
       <!-- Hidden Status Menu Item
       <MenuItem name="/status">
@@ -263,14 +263,19 @@
     height: 60px;
     width: 100%;
     z-index: 1000;
-    background-color: #fff;
-    box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     
     .oj-menu {
-      background: #fff;
+      background: transparent;
       border-bottom: none;
       height: 60px;
       position: relative;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 40px;
       
       &:deep(.ivu-menu-horizontal) {
         height: 60px;
@@ -281,15 +286,17 @@
         padding: 0 20px;
         height: 60px;
         line-height: 60px;
+        font-weight: 500;
+        transition: all 0.2s ease;
         
         &:hover {
-          color: #2d8cf0;
-          border-bottom: 2px solid #2d8cf0;
+          color: #667eea;
+          border-bottom: 2px solid #667eea;
         }
         
         &-active {
-          color: #2d8cf0;
-          border-bottom: 2px solid #2d8cf0;
+          color: #667eea;
+          border-bottom: 2px solid #667eea;
         }
       }
       
@@ -306,13 +313,17 @@
     }
 
     .logo {
-      margin-left: 2%;
-      margin-right: 2%;
-      font-size: 20px;
+      margin-left: 24px;
+      margin-right: 32px;
+      font-size: 22px;
       float: left;
       line-height: 60px;
-      color: #17233d;
-      font-weight: 500;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
 
     .user-menu-container {
@@ -429,27 +440,48 @@
     
     .btn-menu {
       font-size: 14px;
-      float: right;
-      margin-right: 20px;
-      height: 60px;
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       align-items: center;
+      gap: 12px;
       
       .ivu-btn {
-        margin-left: 10px;
         visibility: visible !important;
         opacity: 1 !important;
         display: inline-block !important;
-        border-color: #dcdee2;
-        color: #515a6e;
+        height: 36px;
+        padding: 0 20px;
+        font-weight: 500;
+        border-radius: 18px;
+        transition: all 0.3s ease;
         
-        &:hover {
-          border-color: #2d8cf0;
-          color: #2d8cf0;
+        // Login button
+        &:first-child {
+          background: transparent;
+          border: 2px solid #667eea;
+          color: #667eea;
+          
+          &:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          }
         }
         
-        &:first-child {
-          margin-left: 0;
+        // Register button
+        &:last-child {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          color: white;
+          
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          }
         }
       }
     }

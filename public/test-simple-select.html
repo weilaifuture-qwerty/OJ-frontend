@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Select Test</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <style>
+        body { padding: 50px; }
+        .debug { margin: 20px 0; padding: 20px; background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Simple Select Test</h2>
+        
+        <div class="debug">
+            <h3>Test Select</h3>
+            <i-select v-model="selected" style="width: 200px" @on-open-change="onOpenChange">
+                <i-option v-for="item in options" :value="item" :key="item">{{ item }}</i-option>
+            </i-select>
+            <p>Selected: {{ selected }}</p>
+            <p>Status: {{ status }}</p>
+        </div>
+        
+        <div class="debug">
+            <button @click="checkDropdown">Check Dropdown</button>
+            <pre>{{ debugInfo }}</pre>
+        </div>
+    </div>
+
+    <script src="/static/js/manifest.js"></script>
+    <script src="/static/js/vendor.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    selected: 'C++',
+                    options: ['C', 'C++', 'Java', 'Python3'],
+                    status: 'closed',
+                    debugInfo: ''
+                }
+            },
+            methods: {
+                onOpenChange(open) {
+                    this.status = open ? 'open' : 'closed';
+                    this.checkDropdown();
+                },
+                checkDropdown() {
+                    setTimeout(() => {
+                        const dropdowns = document.querySelectorAll('.ivu-select-dropdown');
+                        const info = [];
+                        dropdowns.forEach((d, i) => {
+                            const rect = d.getBoundingClientRect();
+                            info.push({
+                                index: i,
+                                classes: d.className,
+                                visible: window.getComputedStyle(d).display !== 'none',
+                                rect: { top: rect.top, left: rect.left, width: rect.width, height: rect.height },
+                                hasContent: d.querySelector('.ivu-select-item') !== null
+                            });
+                        });
+                        this.debugInfo = JSON.stringify(info, null, 2);
+                    }, 100);
+                }
+            }
+        }).use(ViewUIPlus).mount('#app');
+    </script>
+</body>
+</html>

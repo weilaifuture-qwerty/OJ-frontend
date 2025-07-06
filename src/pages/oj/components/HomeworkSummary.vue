@@ -1,8 +1,10 @@
 <template>
-  <Card class="homework-summary" shadow>
+  <Card class="homework-summary" :bordered="false">
     <template #title>
-      <Icon type="ios-book" size="20" />
-      {{ $t('m.Homework') }}
+      <div class="card-title">
+        <Icon type="ios-book" />
+        <span>{{ $t('m.Homework') }}</span>
+      </div>
     </template>
     <div class="homework-content">
       <div v-if="!isAuthenticated" class="login-prompt-compact">
@@ -28,9 +30,9 @@
                 <span class="view-all">{{ $t('m.View_all_homework') }} →</span>
               </div>
             </div>
-            <div v-if="nearestDeadline && pendingCount > 0" class="deadline-info">
+            <div v-if="nearestDeadline && pendingCount > 0" class="deadline-info" :class="{ 'overdue': isOverdue(nearestDeadline) }">
               <Icon type="ios-time-outline" size="16" />
-              <span>{{ $t('m.Next_due') }}: {{ formatDeadline(nearestDeadline) }}</span>
+              <span>{{ isOverdue(nearestDeadline) ? '' : $t('m.Next_due') + ': ' }}{{ formatDeadline(nearestDeadline) }}</span>
             </div>
           </template>
         </div>
@@ -90,31 +92,41 @@ export default {
     async loadHomeworkSummary() {
       this.loading = true
       try {
-        // Get homework list with status filter
+        // Get all homework to filter client-side
         const res = await api.getStudentHomework({
-          student_id: this.currentUserId,
-          status: 'pending' // Only get uncompleted homework
+          limit: 100 // Get all homework
         })
         
         if (res.data && res.data.data) {
-          const pendingHomework = res.data.data.results || []
-          this.pendingCount = res.data.data.total || 0
+          const allHomework = res.data.data.results || []
           
-          // Find the nearest deadline
+          // Filter for incomplete homework (assigned or in_progress)
+          const pendingHomework = allHomework.filter(hw => 
+            hw.status === 'assigned' || hw.status === 'in_progress'
+          )
+          
+          this.pendingCount = pendingHomework.length
+          
+          // Find the nearest deadline from pending homework
           if (pendingHomework.length > 0) {
             const sortedByDeadline = pendingHomework
-              .filter(hw => hw.deadline)
-              .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+              .filter(hw => hw.due_date || hw.deadline)
+              .sort((a, b) => {
+                const dateA = new Date(a.due_date || a.deadline)
+                const dateB = new Date(b.due_date || b.deadline)
+                return dateA - dateB
+              })
             
             if (sortedByDeadline.length > 0) {
-              this.nearestDeadline = sortedByDeadline[0].deadline
+              this.nearestDeadline = sortedByDeadline[0].due_date || sortedByDeadline[0].deadline
             }
           }
         }
       } catch (error) {
         console.error('Failed to load homework summary:', error)
-        // Fallback to mock data if API fails
-        this.mockHomeworkData()
+        // Fallback to check if we can get some data
+        this.pendingCount = 0
+        this.nearestDeadline = null
       } finally {
         this.loading = false
       }
@@ -140,6 +152,10 @@ export default {
       } else {
         return deadlineDate.format('MMM D, YYYY')
       }
+    },
+    
+    isOverdue(deadline) {
+      return dayjs(deadline).isBefore(dayjs())
     }
   },
   watch: {
@@ -265,6 +281,28 @@ export default {
     
     i {
       flex-shrink: 0;
+    }
+    
+    &.overdue {
+      background: #fff1f0;
+      color: #f5222d;
+      font-weight: 500;
+      
+      i {
+        animation: pulse 2s infinite;
+      }
+    }
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 1;
     }
   }
   

@@ -1,0 +1,30 @@
+// Fix for ViewUI Plus components in modal
+.ivu-modal-wrap {
+  z-index: 1000 !important;
+}
+
+.ivu-select-dropdown {
+  z-index: 1050 !important;
+  position: absolute !important;
+}
+
+.ivu-date-picker-transfer {
+  z-index: 1050 !important;
+  position: absolute !important;
+}
+
+// Fix for date picker in modal
+.ivu-picker-panel {
+  z-index: 1060 !important;
+}
+
+// Ensure select options are visible
+.ivu-select-dropdown .ivu-select-dropdown-list {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+// Fix for modal content
+.ivu-modal-content {
+  overflow: visible !important;
+}

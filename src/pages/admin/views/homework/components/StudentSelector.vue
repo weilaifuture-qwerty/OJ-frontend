@@ -79,6 +79,7 @@ import api from '@admin/api'
 import time from '@/utils/time'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { useAdminStore } from '@/stores/admin'
 
 dayjs.extend(relativeTime)
 
@@ -123,25 +124,66 @@ export default {
     async loadStudents() {
       this.loading = true
       try {
-        // Get students managed by this admin
-        const res = await api.getManagedStudents()
+        // First try to get students assigned to this admin
+        let students = []
+        
+        try {
+          const res = await api.getManagedStudents()
+          console.log('[StudentSelector] Managed students response:', res.data)
+          students = res.data.data || []
+        } catch (err) {
+          console.log('[StudentSelector] getManagedStudents failed, trying alternative method')
+          
+          // Alternative: Get admin-student relations for current admin
+          try {
+            const adminStore = useAdminStore()
+            const currentAdminId = adminStore.user?.id
+            
+            if (currentAdminId) {
+              const relRes = await api.getAdminStudentRelations({ admin_id: currentAdminId })
+              console.log('[StudentSelector] Relations response:', relRes.data)
+              
+              let relations = []
+              if (Array.isArray(relRes.data.data)) {
+                relations = relRes.data.data
+              } else if (relRes.data.data?.results) {
+                relations = relRes.data.data.results
+              }
+              
+              // Get all users to match with student IDs
+              const userRes = await api.getUserList(0, 1000)
+              const allUsers = userRes.data.data?.results || []
+              
+              // Map student IDs to user objects
+              const studentIds = relations.map(r => r.student)
+              students = allUsers.filter(user => 
+                studentIds.includes(user.id) && 
+                (user.admin_type === 'Regular User' || !user.admin_type)
+              )
+            }
+          } catch (altErr) {
+            console.error('[StudentSelector] Alternative method also failed:', altErr)
+          }
+        }
         
         if (this.limitToStudents) {
           // If limited to specific students, filter them
-          this.students = res.data.data.filter(student => 
+          this.students = students.filter(student => 
             this.limitToStudents.includes(student.id)
           )
         } else {
-          this.students = res.data.data || []
+          this.students = students
         }
         
+        console.log('[StudentSelector] Final students loaded:', this.students)
+        
         // Load additional statistics for each student if available
-        // This could include pending homework count, recent activity, etc.
         await this.loadStudentStatistics()
         
         this.filteredStudents = [...this.students]
       } catch (err) {
-        this.$error(err.data?.data || 'Failed to load students')
+        console.error('[StudentSelector] Error loading students:', err)
+        this.$error(err.data?.data || 'Failed to load students. Please ensure students are assigned to you.')
         this.students = []
         this.filteredStudents = []
       } finally {

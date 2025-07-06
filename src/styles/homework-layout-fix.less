@@ -1,0 +1,48 @@
+// Homework page specific layout fixes
+// Scoped to homework pages only to prevent global effects
+
+// Only apply styles when inside homework pages
+.homework-index-container {
+  // Basic reset
+  margin: 0;
+  padding: 0;
+  
+  // Admin homework list
+  .admin-homework-list {
+    .homework-list-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+  }
+  
+  // Student homework wrapper
+  .student-homework-wrapper {
+    // Hero section
+    .homework-hero {
+      margin-left: -20px; // Compensate for content-app padding
+      margin-right: -20px;
+      padding: 40px 20px;
+    }
+    
+    // Content section
+    .homework-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+      box-sizing: border-box;
+    }
+  }
+  
+  // Fix ViewUI components ONLY within homework context
+  .ivu-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .ivu-col {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}

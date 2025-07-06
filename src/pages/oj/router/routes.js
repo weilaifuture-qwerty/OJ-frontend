@@ -183,8 +183,14 @@ export default [
   {
     path: '/homework',
     name: 'student-homework-list',
-    meta: {requiresAuth: true, title: 'My Homework'},
+    meta: {requiresAuth: true, title: 'Homework'},
     component: StudentHomeworkList
+  },
+  {
+    path: '/homework/admin',
+    name: 'admin-homework-list',
+    meta: {requiresAuth: true, requiresAdmin: true, title: 'Homework Management'},
+    component: () => import('@oj/views/homework/AdminHomeworkList.vue')
   },
   {
     path: '/homework/:id',

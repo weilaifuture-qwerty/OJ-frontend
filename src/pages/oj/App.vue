@@ -11,6 +11,8 @@
       </div>
     </div>
     <!-- <BackTop></BackTop> -->
+    <!-- <LayoutDebugger /> -->
+    <!-- <StylesheetMonitor /> -->
   </div>
 </template>
 
@@ -18,12 +20,16 @@
   import { useWebsiteStore } from '@/stores/website'
   import { useContestStore } from '@/stores/contest'
   import NavBar from '@oj/components/NavBar.vue'
+  // import LayoutDebugger from '@/components/LayoutDebugger.vue'
+  // import StylesheetMonitor from '@/components/StylesheetMonitor.vue'
   import api from '@oj/api'
 
   export default {
     name: 'app',
     components: {
       NavBar
+      // LayoutDebugger,
+      // StylesheetMonitor
     },
     data () {
       return {
@@ -90,19 +96,27 @@
   }
 
 
-  @media screen and (max-width: 1200px) {
   .content-app {
-    margin-top: 160px;
-    padding: 0 2%;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    box-sizing: border-box;
   }
-}
 
-@media screen and (min-width: 1200px) {
-  .content-app {
-    margin-top: 80px;
-    padding: 0 2%;
+  @media screen and (max-width: 1200px) {
+    .content-app {
+      margin-top: 60px;
+      padding: 0 20px;
+    }
   }
-}
+
+  @media screen and (min-width: 1200px) {
+    .content-app {
+      margin-top: 80px;
+      padding: 0 20px;
+    }
+  }
 
   .footer {
     margin-top: 20px;

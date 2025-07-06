@@ -1,0 +1,17 @@
+// Critical Layout Fixes - Load First to Prevent Layout Shift
+// This file contains critical CSS that must be applied immediately
+
+// Ensure main app container is centered
+.content-app {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+// Fix navbar alignment
+#header {
+  width: 100%;
+  left: 0;
+  right: 0;
+}

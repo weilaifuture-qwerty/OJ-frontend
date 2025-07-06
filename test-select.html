@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Select Dropdown</title>
+    <link rel="stylesheet" href="https://unpkg.com/view-ui-plus/dist/styles/viewuiplus.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/view-ui-plus/dist/viewuiplus.min.js"></script>
+    <style>
+        #app {
+            padding: 50px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="test-section">
+            <h3>Basic Select Test</h3>
+            <i-select v-model="language1" style="width:200px">
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <p>Selected: {{ language1 }}</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Select with Transfer</h3>
+            <i-select v-model="language2" style="width:200px" transfer>
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <p>Selected: {{ language2 }}</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Select with model-value (Vue 3 style)</h3>
+            <i-select :model-value="language3" @on-change="handleChange" style="width:200px" transfer>
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <p>Selected: {{ language3 }}</p>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    language1: 'C++',
+                    language2: 'Python3',
+                    language3: 'Java'
+                }
+            },
+            methods: {
+                handleChange(value) {
+                    console.log('Language changed to:', value);
+                    this.language3 = value;
+                }
+            }
+        }).use(ViewUIPlus).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+// Final fix for Select dropdown visibility
+// Handle both transfer and non-transfer modes
+
+// Base dropdown styles
+.ivu-select-dropdown {
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, .2);
+  position: absolute;
+  z-index: 1060;
+  overflow: visible;
+  min-width: 100px;
+  width: 100%;
+  
+  .ivu-select-dropdown-list {
+    list-style: none;
+    padding: 5px 0;
+    margin: 0;
+    max-height: 200px;
+    overflow: auto;
+  }
+}
+
+// For non-transfer mode (dropdown inside select)
+.ivu-select {
+  position: relative;
+  
+  .ivu-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    margin-top: 5px;
+    
+    // ViewUI Plus uses these classes for visibility
+    &:not(.ivu-select-dropdown-transfer) {
+      display: none;
+    }
+  }
+  
+  &.ivu-select-visible {
+    .ivu-select-dropdown:not(.ivu-select-dropdown-transfer) {
+      display: block !important;
+    }
+  }
+}
+
+// Critical: Make dropdown visible when it has the transition class (transfer mode)
+.ivu-select-dropdown.transition-drop-enter-to,
+.ivu-select-dropdown.transition-drop-enter-active {
+  opacity: 1 !important;
+  transform: scaleY(1) !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+// Ensure items are visible and styled
+.ivu-select-item {
+  margin: 0;
+  padding: 7px 16px;
+  clear: both;
+  color: #515a6e;
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+  list-style: none;
+  cursor: pointer;
+  transition: background .2s ease-in-out;
+  display: list-item;
+  
+  &:hover {
+    background-color: #f3f3f3;
+  }
+  
+  &-selected,
+  &.ivu-select-item-selected {
+    color: #2d8cf0;
+    background-color: rgba(45, 140, 240, .1);
+  }
+}
+
+// Specific fix for CodeMirror dropdowns
+.codemirror-language-dropdown,
+.codemirror-theme-dropdown {
+  &.transition-drop-enter-to {
+    opacity: 1 !important;
+    transform: scaleY(1) !important;
+    visibility: visible !important;
+    display: block !important;
+    min-height: 32px !important;
+  }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Student Dropdown</title>
+    <link rel="stylesheet" href="https://unpkg.com/view-ui-plus@1.3.1/dist/styles/viewuiplus.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/view-ui-plus@1.3.1/dist/viewuiplus.min.js"></script>
+    <style>
+        #app { padding: 20px; }
+        .debug-info { 
+            background: #f0f0f0; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>Student Dropdown Debug</h2>
+        
+        <div class="debug-info">
+            <p>Students loaded: {{ studentList.length }}</p>
+            <p>Selected IDs: {{ selectedIds }}</p>
+            <p>Loading: {{ loading }}</p>
+        </div>
+        
+        <i-form :model="formData" :label-width="120">
+            <form-item label="Basic Select">
+                <i-select 
+                    v-model="basicSelect" 
+                    placeholder="Test basic select"
+                    style="width: 100%;"
+                >
+                    <i-option value="test1">Test Option 1</i-option>
+                    <i-option value="test2">Test Option 2</i-option>
+                    <i-option value="test3">Test Option 3</i-option>
+                </i-select>
+            </form-item>
+            
+            <form-item label="Student Select">
+                <i-select 
+                    v-model="selectedIds" 
+                    multiple 
+                    filterable
+                    placeholder="Select students"
+                    :loading="loading"
+                    style="width: 100%;"
+                >
+                    <i-option 
+                        v-for="student in studentList" 
+                        :key="student.id" 
+                        :value="student.id"
+                        :label="student.username"
+                    >
+                        {{ student.username }} ({{ student.email }})
+                    </i-option>
+                </i-select>
+            </form-item>
+            
+            <form-item label="Alternative Format">
+                <i-select 
+                    v-model="selectedIds2" 
+                    multiple 
+                    filterable
+                    placeholder="Select students (alt format)"
+                    style="width: 100%;"
+                >
+                    <i-option 
+                        v-for="student in studentList" 
+                        :key="'alt-' + student.id" 
+                        :value="student.id"
+                    >
+                        <span>{{ student.username }}</span>
+                        <span style="float: right; color: #999;">{{ student.email }}</span>
+                    </i-option>
+                </i-select>
+            </form-item>
+        </i-form>
+        
+        <i-button @click="loadStudents" :loading="loading">Load Students</i-button>
+        <i-button @click="loadMockStudents">Load Mock Students</i-button>
+        <i-button @click="testSelection">Test Selection</i-button>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        
+        createApp({
+            data() {
+                return {
+                    studentList: [],
+                    selectedIds: [],
+                    selectedIds2: [],
+                    basicSelect: '',
+                    loading: false,
+                    formData: {}
+                };
+            },
+            mounted() {
+                console.log('Component mounted');
+                this.loadMockStudents();
+            },
+            methods: {
+                async loadStudents() {
+                    this.loading = true;
+                    try {
+                        const response = await fetch('/api/available_students', {
+                            credentials: 'include',
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.data) {
+                            this.studentList = data.data;
+                            this.$Message.success(`Loaded ${this.studentList.length} students`);
+                        }
+                    } catch (err) {
+                        console.error('Failed to load students:', err);
+                        this.$Message.error('Failed to load students');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                loadMockStudents() {
+                    this.studentList = [
+                        { id: 1, username: 'student1', email: 'student1@example.com' },
+                        { id: 2, username: 'student2', email: 'student2@example.com' },
+                        { id: 3, username: 'student3', email: 'student3@example.com' },
+                        { id: 4, username: 'john_doe', email: 'john@example.com' },
+                        { id: 5, username: 'jane_smith', email: 'jane@example.com' }
+                    ];
+                    this.$Message.success('Loaded mock students');
+                },
+                
+                testSelection() {
+                    this.selectedIds = [1, 3, 5];
+                    this.$Message.info('Set selection to [1, 3, 5]');
+                }
+            }
+        }).use(ViewUIPlus).mount('#app');
+    </script>
+</body>
+</html>

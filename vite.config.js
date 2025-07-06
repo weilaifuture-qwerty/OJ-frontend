@@ -30,12 +30,18 @@ export default defineConfig({
     vue(),
     AutoImport({
       imports: ['vue', 'vue-router', 'pinia'],
-      resolvers: [ElementPlusResolver()],
+      resolvers: [ElementPlusResolver({
+        importStyle: false
+      })],
       dts: false
     }),
     Components({
-      resolvers: [ElementPlusResolver()],
-      dts: false
+      resolvers: [ElementPlusResolver({
+        importStyle: false
+      })],
+      dts: false,
+      include: [/\.vue$/, /\.vue\?vue/],
+      exclude: [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/, /[\\/]src[\\/]pages[\\/]admin[\\/].*\.vue$/]
     }),
     createHtmlPlugin({
       minify: true,

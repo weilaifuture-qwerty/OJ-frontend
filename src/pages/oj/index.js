@@ -16,6 +16,10 @@ import VerticalMenuItem from '@oj/components/verticalMenu/verticalMenu-item.vue'
 // Import custom styles after ViewUI to ensure overrides work
 import '@/styles/index.less'
 
+// Import layout monitoring for debugging
+// import '@/utils/layout-monitor'
+// import '@/utils/layout-debug'
+
 import highlight from '@/plugins/highlight'
 import katex from '@/plugins/katex'
 import filters from '@/utils/filters.js'

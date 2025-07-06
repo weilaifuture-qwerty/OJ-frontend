@@ -14,8 +14,7 @@
   }
 }
 
-// Dropdown menu positioning
-.ivu-select-dropdown,
+// Dropdown menu positioning (excluding select dropdowns)
 .ivu-dropdown .ivu-dropdown-menu {
   position: absolute;
   z-index: 1050;
@@ -25,6 +24,11 @@
   margin: 5px 0;
   padding: 5px 0;
   min-width: 100px;
+}
+
+// Select dropdowns should use their own styling
+.ivu-select-dropdown {
+  z-index: 1050;
 }
 
 // Dropdown items
@@ -98,20 +102,22 @@
   }
 }
 
-// Visibility control
+// Visibility control for regular dropdowns only
 .ivu-dropdown {
-  .ivu-dropdown-menu,
-  .ivu-select-dropdown {
+  .ivu-dropdown-menu {
     display: none;
   }
   
   &.ivu-dropdown-visible {
-    .ivu-dropdown-menu,
-    .ivu-select-dropdown {
+    .ivu-dropdown-menu {
       display: block;
     }
   }
 }
+
+// Select dropdown has its own visibility control
+// Don't apply any visibility rules to .ivu-select-dropdown
+// as ViewUI Plus handles this internally
 
 // Submenu visibility
 .ivu-menu-submenu {

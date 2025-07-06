@@ -1,8 +1,10 @@
 <template>
-  <Card class="problem-suggestion" :class="{ compact }" shadow>
+  <Card class="problem-suggestion" :class="{ compact }" :bordered="false">
     <template #title v-if="!hideTitle">
-      <Icon type="ios-bulb" size="20" />
-      {{ $t('m.Suggested_Problems') }}
+      <div class="card-title">
+        <Icon type="ios-bulb" />
+        <span>{{ $t('m.Suggested_Problems') }}</span>
+      </div>
     </template>
     <div class="suggestion-content">
       <div v-if="!isAuthenticated" class="login-prompt">
@@ -17,7 +19,81 @@
           <p>{{ $t('m.Analyzing_your_practice_history') }}</p>
         </div>
         
-        <!-- Suggestions -->
+        <!-- Daily Problem Mode -->
+        <div v-else-if="todaysProblem && !todaysProblemCompleted" class="daily-problem-mode">
+          <div class="daily-problem-header">
+            <h3>{{ $t('m.Daily_Problem') }}</h3>
+            <div class="date-badge">{{ getSimpleDate() }}</div>
+          </div>
+          
+          <div class="daily-problem-card">
+            <router-link 
+              :to="{ name: 'problem-details', params: { problemID: todaysProblem._id } }"
+              class="problem-link"
+              @click="trackProblemClick"
+            >
+              <h4 class="problem-name">{{ todaysProblem.title }}</h4>
+              <div class="problem-meta">
+                <Tag color="gold" size="small">
+                  <Icon type="md-star" size="12" />
+                  {{ $t('m.Problem_of_the_Day') }}
+                </Tag>
+                <span class="difficulty-badge" :class="`difficulty-${todaysProblem.difficulty.toLowerCase()}`">
+                  {{ $t('m.' + todaysProblem.difficulty) }}
+                </span>
+              </div>
+            </router-link>
+          </div>
+          
+          <div class="daily-actions">
+            <Button type="primary" @click="goToSolve" size="large" long>
+              <Icon type="md-arrow-forward" />
+              {{ $t('m.Go_to_Solve') }}
+            </Button>
+            <Button type="text" @click="viewMoreProblems" size="small">
+              {{ $t('m.View_More_Problems') }}
+            </Button>
+          </div>
+          
+          <div class="motivation-tip">
+            <Icon type="ios-quote" />
+            <p>{{ getMotivationalQuote() }}</p>
+          </div>
+        </div>
+        
+        <!-- Completed Today -->
+        <div v-else-if="todaysProblemCompleted" class="completed-today">
+          <div class="completion-banner">
+            <Icon type="ios-checkmark-circle" size="32" />
+            <div class="completion-text">
+              <h4>{{ $t('m.Great_Job') }}</h4>
+              <p>{{ getStreakDays() }} {{ $t('m.day_streak') }}</p>
+            </div>
+          </div>
+          
+          <div class="next-suggestions">
+            <h4>{{ $t('m.Want_More_Practice') }}</h4>
+            <div class="bonus-problems">
+              <router-link 
+                v-for="(problem, index) in bonusProblems" 
+                :key="problem._id"
+                :to="{ name: 'problem-details', params: { problemID: problem._id } }"
+                class="bonus-problem-card"
+              >
+                <span class="problem-title">{{ problem.title }}</span>
+                <span class="difficulty-badge" :class="`difficulty-${problem.difficulty.toLowerCase()}`">
+                  {{ $t('m.' + problem.difficulty) }}
+                </span>
+              </router-link>
+            </div>
+            <Button type="text" @click="loadMoreProblems" :loading="loadingMore" size="small">
+              {{ $t('m.Load_More_Problems') }}
+              <Icon type="ios-arrow-down" />
+            </Button>
+          </div>
+        </div>
+        
+        <!-- Regular Suggestions List (fallback) -->
         <div v-else-if="suggestions.length > 0" class="suggestions-list">
           <div class="suggestion-header">
             <p class="suggestion-intro">{{ $t('m.Based_on_your_recent_practice') }}</p>
@@ -136,7 +212,15 @@ export default {
       loading: false,
       refreshing: false,
       suggestions: [],
-      userProfile: null
+      userProfile: null,
+      todaysProblem: null,
+      todaysProblemCompleted: false,
+      userSubmissions: {}, // Track user submissions by problem ID
+      lastSuggestionDate: null,
+      bonusProblems: [],
+      loadingMore: false,
+      completionTime: null,
+      streakDays: 0
     }
   },
   computed: {
@@ -156,7 +240,8 @@ export default {
   },
   mounted() {
     if (this.isAuthenticated) {
-      this.loadSuggestions()
+      this.loadDailyProblem()
+      this.checkProblemStatus()
     }
   },
   methods: {
@@ -251,14 +336,196 @@ export default {
         name: 'problem-list',
         query: { suggested: true }
       })
+    },
+    
+    async loadDailyProblem() {
+      // Check if we already have today's problem
+      const today = new Date().toDateString()
+      const savedDate = localStorage.getItem('lastProblemDate')
+      const savedProblem = localStorage.getItem('todaysProblem')
+      
+      if (savedDate === today && savedProblem) {
+        this.todaysProblem = JSON.parse(savedProblem)
+      } else {
+        // Load new daily problem
+        await this.loadSuggestions()
+        if (this.suggestions.length > 0) {
+          this.todaysProblem = this.suggestions[0]
+          
+          // Save to localStorage
+          localStorage.setItem('lastProblemDate', today)
+          localStorage.setItem('todaysProblem', JSON.stringify(this.todaysProblem))
+        }
+      }
+      
+      // Check if problem is completed
+      if (this.todaysProblem) {
+        await this.checkProblemStatus()
+      }
+    },
+    
+    async checkProblemStatus() {
+      if (!this.todaysProblem) return
+      
+      try {
+        // Check user's submissions for this problem
+        const res = await api.getSubmissionList(0, 1, {
+          myself: 1,
+          problem_id: this.todaysProblem._id,
+          result: 0 // Accepted submissions only
+        })
+        
+        if (res.data && res.data.data && res.data.data.results.length > 0) {
+          this.todaysProblemCompleted = true
+          this.completionTime = new Date(res.data.data.results[0].create_time).toLocaleTimeString()
+          await this.updateStreakDays()
+          this.loadBonusProblems()
+        } else {
+          this.todaysProblemCompleted = false
+        }
+      } catch (error) {
+        console.error('Error checking problem status:', error)
+        this.todaysProblemCompleted = false
+      }
+    },
+    
+    goToSolve() {
+      // Navigate to the problem page
+      this.$router.push({
+        name: 'problem-details',
+        params: { problemID: this.todaysProblem._id }
+      })
+    },
+    
+    viewMoreProblems() {
+      // Navigate to problems list
+      this.$router.push({ name: 'problem-list' })
+    },
+    
+    async loadBonusProblems() {
+      // Load additional problems from suggestions
+      if (this.suggestions.length > 1) {
+        this.bonusProblems = this.suggestions.slice(1, 4)
+      } else {
+        await this.loadSuggestions()
+        this.bonusProblems = this.suggestions.slice(0, 3)
+      }
+    },
+    
+    async loadMoreProblems() {
+      this.loadingMore = true
+      try {
+        // Load more suggestions
+        await this.loadSuggestions()
+        this.bonusProblems = [...this.bonusProblems, ...this.suggestions.slice(0, 3)]
+      } finally {
+        this.loadingMore = false
+      }
+    },
+    
+    async calculateStreak() {
+      try {
+        // Get user's recent accepted submissions
+        const res = await api.getSubmissionList(0, 100, {
+          myself: 1,
+          result: 0 // Accepted submissions only
+        })
+        
+        if (!res.data || !res.data.data) return 0
+        
+        const submissions = res.data.data.results
+        if (submissions.length === 0) return 0
+        
+        // Group submissions by date
+        const submissionDates = new Set()
+        submissions.forEach(sub => {
+          const date = new Date(sub.create_time).toDateString()
+          submissionDates.add(date)
+        })
+        
+        // Calculate streak
+        let streak = 0
+        const today = new Date()
+        let currentDate = today
+        
+        while (true) {
+          const dateStr = currentDate.toDateString()
+          if (submissionDates.has(dateStr)) {
+            streak++
+            currentDate.setDate(currentDate.getDate() - 1)
+          } else if (streak === 0 && currentDate.toDateString() === today.toDateString()) {
+            // Today hasn't been completed yet, check yesterday
+            currentDate.setDate(currentDate.getDate() - 1)
+          } else {
+            break
+          }
+        }
+        
+        return streak
+      } catch (error) {
+        console.error('Error calculating streak:', error)
+        return 0
+      }
+    },
+    
+    getTodayDate() {
+      return new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })
+    },
+    
+    getSimpleDate() {
+      const date = new Date()
+      const day = date.getDate()
+      const month = date.toLocaleDateString('en-US', { month: 'short' })
+      return `${month} ${day}`
+    },
+    
+    getCompletionTime() {
+      return this.completionTime || new Date().toLocaleTimeString()
+    },
+    
+    getStreakDays() {
+      return this.streakDays
+    },
+    
+    async updateStreakDays() {
+      this.streakDays = await this.calculateStreak()
+    },
+    
+    getMotivationalQuote() {
+      const quotes = [
+        'Every expert was once a beginner. Keep going!',
+        'The journey of a thousand miles begins with a single step.',
+        'Practice makes perfect. You\'re doing great!',
+        'Consistency is the key to mastery.',
+        'Small daily improvements lead to stunning results.',
+        'Your future self will thank you for the practice today.',
+        'Challenges are what make life interesting. Overcoming them is what makes life meaningful.'
+      ]
+      
+      // Pick a quote based on the day
+      const dayIndex = new Date().getDate() % quotes.length
+      return quotes[dayIndex]
+    },
+    
+    trackProblemClick() {
+      // Track that user clicked on the problem
+      // This could be used for analytics
+      console.log('User clicked on daily problem:', this.todaysProblem.title)
     }
   },
   watch: {
     isAuthenticated(val) {
       if (val) {
-        this.loadSuggestions()
+        this.loadDailyProblem()
       } else {
         this.suggestions = []
+        this.todaysProblem = null
+        this.todaysProblemCompleted = false
       }
     }
   }
@@ -452,6 +719,258 @@ export default {
     small {
       color: #999;
       font-size: 13px;
+    }
+  }
+  
+  // Daily Problem Mode styles
+  .daily-problem-mode {
+    padding: 5px 0;
+    
+    .daily-problem-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      
+      h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        color: #17233d;
+      }
+      
+      .date-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 6px 20px;
+        background: #e6f7ff;
+        color: #1890ff;
+        border-radius: 16px;
+        white-space: nowrap;
+        min-width: 80px;
+        text-align: center;
+      }
+    }
+    
+    .daily-problem-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        background: #f0f2f5;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      
+      .problem-link {
+        display: block;
+        text-decoration: none;
+        
+        .problem-name {
+          margin: 0 0 12px 0;
+          font-size: 18px;
+          font-weight: 500;
+          color: #1890ff;
+          line-height: 1.4;
+          
+          &:hover {
+            color: #40a9ff;
+          }
+        }
+        
+        .problem-meta {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          
+          .difficulty-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            
+            &.difficulty-low {
+              color: #52c41a;
+              background: #f6ffed;
+              border: 1px solid #b7eb8f;
+            }
+            
+            &.difficulty-mid {
+              color: #faad14;
+              background: #fffbe6;
+              border: 1px solid #ffe58f;
+            }
+            
+            &.difficulty-high {
+              color: #f5222d;
+              background: #fff1f0;
+              border: 1px solid #ffccc7;
+            }
+          }
+        }
+      }
+    }
+    
+    .daily-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+      
+      .ivu-btn-primary {
+        max-width: 280px;
+        font-size: 15px;
+        height: 40px;
+        
+        .ivu-icon {
+          margin-right: 6px;
+        }
+      }
+      
+      .ivu-btn-text {
+        color: #8c8c8c;
+        
+        &:hover {
+          color: #595959;
+        }
+      }
+    }
+    
+    .motivation-tip {
+      margin-top: 30px;
+      padding: 15px 20px;
+      background: #f0f2f5;
+      border-radius: 6px;
+      position: relative;
+      text-align: center;
+      
+      .ivu-icon {
+        position: absolute;
+        top: 12px;
+        left: 15px;
+        color: #bfbfbf;
+        font-size: 18px;
+      }
+      
+      p {
+        margin: 0;
+        font-style: italic;
+        color: #595959;
+        line-height: 1.5;
+        font-size: 14px;
+      }
+    }
+  }
+  
+  // Completed Today styles
+  .completed-today {
+    padding: 5px 0;
+    
+    .completion-banner {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      
+      .ivu-icon {
+        color: #52c41a;
+      }
+      
+      .completion-text {
+        h4 {
+          margin: 0 0 4px;
+          color: #389e0d;
+          font-size: 18px;
+          font-weight: 600;
+        }
+        
+        p {
+          margin: 0;
+          color: #52c41a;
+          font-size: 14px;
+        }
+      }
+    }
+    
+    .next-suggestions {
+      h4 {
+        margin: 0 0 15px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #17233d;
+      }
+      
+      .bonus-problems {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 15px;
+        
+        .bonus-problem-card {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          background: #f8f9fa;
+          border-radius: 6px;
+          text-decoration: none;
+          transition: all 0.3s;
+          
+          &:hover {
+            background: #f0f2f5;
+            transform: translateX(4px);
+          }
+          
+          .problem-title {
+            color: #1890ff;
+            font-size: 15px;
+            font-weight: 500;
+          }
+          
+          .difficulty-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 500;
+            
+            &.difficulty-low {
+              color: #52c41a;
+              background: #f6ffed;
+            }
+            
+            &.difficulty-mid {
+              color: #faad14;
+              background: #fffbe6;
+            }
+            
+            &.difficulty-high {
+              color: #f5222d;
+              background: #fff1f0;
+            }
+          }
+        }
+      }
+      
+      .ivu-btn-text {
+        color: #8c8c8c;
+        margin-top: 5px;
+        
+        &:hover {
+          color: #1890ff;
+        }
+      }
     }
   }
 }

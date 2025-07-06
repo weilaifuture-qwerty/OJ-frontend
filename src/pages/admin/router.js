@@ -63,10 +63,10 @@ const router = createRouter({
           name: 'edit-problem',
           component: Problem
         },
+        // Import/Export functionality moved to Problem List
         {
           path: '/problem/batch_ops',
-          name: 'problem_batch_ops',
-          component: ProblemImportOrExport
+          redirect: '/problems'
         },
         {
           path: '/contest/create',
@@ -116,8 +116,7 @@ const router = createRouter({
         },
         {
           path: '/homework/create',
-          name: 'admin-create-homework',
-          component: CreateEditHomework
+          redirect: '/homework'
         },
         {
           path: '/homework/:id/edit',

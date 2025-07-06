@@ -1,0 +1,63 @@
+// ViewUI Plus Select dropdown fix
+// Balance between visibility and proper closing behavior
+
+// Base styles for select dropdowns
+.ivu-select-dropdown {
+  // Initial state - hidden but ready
+  position: absolute;
+  z-index: 1060;
+  will-change: opacity, transform;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin-top: 5px;
+  
+  // ViewUI Plus native animation classes
+  &.ivu-select-dropdown-transfer {
+    position: absolute;
+    z-index: 1060;
+  }
+  
+  // Placement variations
+  &[x-placement^="bottom"] {
+    transform-origin: center top;
+  }
+  
+  &[x-placement^="top"] {
+    transform-origin: center bottom;
+    margin-top: 0;
+    margin-bottom: 5px;
+  }
+}
+
+// For dropdowns rendered at body level (transfer mode)
+body > .ivu-select-dropdown {
+  position: absolute;
+  z-index: 1060;
+}
+
+// Ensure CodeMirror dropdowns work
+.codemirror-language-dropdown,
+.codemirror-theme-dropdown {
+  &.ivu-select-dropdown {
+    z-index: 1060;
+  }
+}
+
+// ViewUI animation classes
+.ivu-transition-drop-enter-active,
+.ivu-transition-drop-leave-active {
+  transition: opacity .3s, transform .3s;
+}
+
+.ivu-transition-drop-enter-from,
+.ivu-transition-drop-leave-to {
+  opacity: 0;
+  transform: scaleY(0);
+}
+
+.ivu-transition-drop-enter-to,
+.ivu-transition-drop-leave-from {
+  opacity: 1;
+  transform: scaleY(1);
+}

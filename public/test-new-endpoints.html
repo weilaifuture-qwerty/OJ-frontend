@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test New Homework Endpoints</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        .endpoint-group { margin: 20px 0; padding: 15px; border: 2px solid #333; }
+        button { margin: 5px; padding: 10px; cursor: pointer; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Testing New Homework Endpoints</h1>
+    
+    <div class="endpoint-group">
+        <h2>Student Management Endpoints</h2>
+        <button onclick="testEndpoint('/api/available_students')">Test available_students</button>
+        <button onclick="testEndpoint('/api/available_students?search=john')">Test with search</button>
+        <button onclick="testEndpoint('/api/available_students?group=CS101')">Test with group filter</button>
+        <button onclick="testEndpoint('/api/available_students?include_stats=true')">Test with stats</button>
+        <button onclick="testEndpoint('/api/users?type=student')">Test users (students)</button>
+        <button onclick="testEndpoint('/api/users?type=all&page=1&limit=10')">Test users (paginated)</button>
+        <button onclick="testEndpoint('/api/students_by_group')">Test students_by_group</button>
+        <button onclick="testEndpoint('/api/available_groups')">Test available_groups</button>
+    </div>
+    
+    <div class="endpoint-group">
+        <h2>Admin Endpoints</h2>
+        <button onclick="testEndpoint('/api/admin/admin_list')">Test admin_list</button>
+    </div>
+    
+    <div class="endpoint-group">
+        <h2>Test POST Endpoints</h2>
+        <button onclick="testUpdateGroup()">Test update_student_group</button>
+        <button onclick="testCreateHomework()">Test create_homework</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function testEndpoint(url, method = 'GET', data = null) {
+            const div = document.createElement('div');
+            div.className = 'test';
+            
+            try {
+                const options = {
+                    method: method,
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(url, options);
+                const text = await response.text();
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(text);
+                } catch (e) {
+                    jsonData = null;
+                }
+                
+                div.className += response.ok ? ' success' : ' error';
+                div.innerHTML = `
+                    <strong>${method} ${url}</strong><br>
+                    Status: ${response.status} ${response.statusText}<br>
+                    <pre>Response: ${jsonData ? JSON.stringify(jsonData, null, 2) : text}</pre>
+                `;
+            } catch (error) {
+                div.className += ' error';
+                div.innerHTML = `
+                    <strong>${method} ${url}</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+            
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testUpdateGroup() {
+            const data = {
+                student_id: 1,
+                group_name: 'CS101'
+            };
+            await testEndpoint('/api/update_student_group', 'POST', data);
+        }
+        
+        async function testCreateHomework() {
+            const data = {
+                title: 'Test Homework',
+                description: 'Test description',
+                due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                problem_ids: [1, 2],
+                student_ids: [1, 2],
+                auto_grade: true
+            };
+            await testEndpoint('/api/admin_create_homework', 'POST', data);
+        }
+        
+        // Test all endpoints on load
+        window.onload = async function() {
+            console.log('Testing new endpoints...');
+            
+            // Basic connectivity test
+            await testEndpoint('/api/website');
+            
+            // Test the new endpoints
+            await testEndpoint('/api/available_students');
+            await testEndpoint('/api/users?type=student&limit=5');
+            await testEndpoint('/api/students_by_group');
+            await testEndpoint('/api/available_groups');
+        };
+    </script>
+</body>
+</html>

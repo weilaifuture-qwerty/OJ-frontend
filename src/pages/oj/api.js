@@ -314,6 +314,13 @@ export default {
     return ajax('user_streak', 'get')
   },
   dailyCheckIn () {
+    // Debug: Log the current date being sent
+    const now = new Date()
+    console.log('[API DEBUG] dailyCheckIn called at:', {
+      'timestamp': now.toISOString(),
+      'local': now.toString(),
+      'timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
+    })
     return ajax('daily_check_in', 'post')
   },
   getProblemSuggestions () {
@@ -340,6 +347,11 @@ export default {
       data
     })
   },
+  submitHomework (homeworkId) {
+    return ajax('submit_homework', 'post', {
+      data: { homework_id: homeworkId }
+    })
+  },
   getHomeworkProgress () {
     return ajax('homework_progress', 'get')
   },
@@ -356,6 +368,59 @@ export default {
   deleteHomeworkComment (id) {
     return ajax('homework_comments', 'delete', {
       params: { id }
+    })
+  },
+  // Admin homework endpoints for OJ page
+  getAdminHomeworkList (params) {
+    return ajax('admin_homework_list', 'get', {
+      params
+    })
+  },
+  createHomeworkFromOJ (data) {
+    return ajax('admin_create_homework', 'post', {
+      data
+    })
+  },
+  assignHomeworkFromOJ (data) {
+    return ajax('admin_assign_homework', 'post', {
+      data
+    })
+  },
+  deleteHomework (id) {
+    return ajax('admin_delete_homework', 'delete', {
+      params: { id }
+    })
+  },
+  updateHomework (id, data) {
+    return ajax('admin_update_homework', 'put', {
+      params: { id },
+      data
+    })
+  },
+  getAvailableProblems (params) {
+    return ajax('available_problems', 'get', {
+      params
+    })
+  },
+  getAvailableStudents (params) {
+    return ajax('available_students', 'get', {
+      params
+    })
+  },
+  getUsers (params) {
+    return ajax('users', 'get', {
+      params
+    })
+  },
+  getStudentsByGroup () {
+    return ajax('students_by_group', 'get')
+  },
+  getAvailableGroups () {
+    return ajax('available_groups', 'get')
+  },
+  updateStudentGroup (data) {
+    return ajax('update_student_group', 'post', {
+      data
     })
   }
 };

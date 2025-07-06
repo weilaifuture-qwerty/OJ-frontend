@@ -1,0 +1,17 @@
+// Fix for CodeMirror Select dropdown styling
+// Only style appearance, not visibility
+
+// Style for the language/theme selects in CodeMirror
+.header {
+  .adjust {
+    &.ivu-select {
+      min-width: 150px;
+    }
+  }
+}
+
+// Ensure dropdown menus have proper dimensions
+.ivu-select-dropdown-list {
+  max-height: 300px;
+  overflow-y: auto;
+}

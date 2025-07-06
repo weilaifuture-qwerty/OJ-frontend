@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Homework API Endpoints</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .endpoint { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .success { background-color: #e7f5e7; }
+        .error { background-color: #f5e7e7; }
+        .info { background-color: #e7f0f5; }
+        button { margin: 5px; padding: 8px 15px; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Homework API Endpoint Checker</h1>
+    
+    <div style="margin: 20px 0;">
+        <button onclick="checkAllEndpoints()">Check All Endpoints</button>
+        <button onclick="testCreateHomework()">Test Create Homework</button>
+        <button onclick="checkDjangoDebug()">Check Django Debug</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const homeworkEndpoints = [
+            // Student endpoints
+            { method: 'GET', url: '/api/student_homework?page=1&limit=10', name: 'Student Homework List' },
+            { method: 'GET', url: '/api/homework_progress', name: 'Homework Progress' },
+            { method: 'GET', url: '/api/student_homework_detail?id=1', name: 'Student Homework Detail' },
+            
+            // Admin endpoints
+            { method: 'GET', url: '/api/admin_homework_list?page=1&limit=10', name: 'Admin Homework List' },
+            { method: 'GET', url: '/api/available_students', name: 'Available Students' },
+            { method: 'GET', url: '/api/admin_homework_detail?id=1', name: 'Admin Homework Detail' },
+            { method: 'GET', url: '/api/homework_statistics?id=1', name: 'Homework Statistics' },
+            
+            // Other endpoints to check
+            { method: 'GET', url: '/api/', name: 'API Root' },
+            { method: 'GET', url: '/api/profile', name: 'User Profile (test auth)' },
+            { method: 'GET', url: '/api/problem?limit=5&offset=0&paging=true', name: 'Problem List (test)' }
+        ];
+        
+        async function checkEndpoint(endpoint) {
+            const div = document.createElement('div');
+            div.className = 'endpoint';
+            
+            try {
+                const response = await fetch(endpoint.url, {
+                    method: endpoint.method,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = text;
+                }
+                
+                if (response.ok) {
+                    div.className += ' success';
+                    div.innerHTML = `
+                        <strong>✓ ${endpoint.name}</strong><br>
+                        <code>${endpoint.method} ${endpoint.url}</code><br>
+                        Status: ${response.status} ${response.statusText}<br>
+                        <details>
+                            <summary>Response Data</summary>
+                            <pre>${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</pre>
+                        </details>
+                    `;
+                } else {
+                    div.className += ' error';
+                    div.innerHTML = `
+                        <strong>✗ ${endpoint.name}</strong><br>
+                        <code>${endpoint.method} ${endpoint.url}</code><br>
+                        Status: ${response.status} ${response.statusText}<br>
+                        <details>
+                            <summary>Error Details</summary>
+                            <pre>${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</pre>
+                        </details>
+                    `;
+                }
+            } catch (error) {
+                div.className += ' error';
+                div.innerHTML = `
+                    <strong>✗ ${endpoint.name}</strong><br>
+                    <code>${endpoint.method} ${endpoint.url}</code><br>
+                    Error: ${error.message}
+                `;
+            }
+            
+            return div;
+        }
+        
+        async function checkAllEndpoints() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Checking endpoints...</p>';
+            
+            for (const endpoint of homeworkEndpoints) {
+                const result = await checkEndpoint(endpoint);
+                resultsDiv.appendChild(result);
+            }
+        }
+        
+        async function testCreateHomework() {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'endpoint info';
+            
+            try {
+                const testData = {
+                    title: "Test Homework",
+                    description: "Test homework created from API checker",
+                    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    problem_ids: [1],
+                    student_ids: [],
+                    auto_grade: true
+                };
+                
+                const response = await fetch('/api/admin_create_homework', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                div.innerHTML = `
+                    <strong>Test Create Homework</strong><br>
+                    Status: ${response.status} ${response.statusText}<br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                div.innerHTML = `
+                    <strong>Test Create Homework</strong><br>
+                    Error: ${error.message}
+                `;
+            }
+            
+            resultsDiv.appendChild(div);
+        }
+        
+        async function checkDjangoDebug() {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'endpoint info';
+            
+            // Try to access Django admin or debug URLs
+            const debugUrls = [
+                '/api/',
+                '/api/admin/',
+                '/admin/',
+                '/api/homework/',
+                '/homework/'
+            ];
+            
+            div.innerHTML = '<strong>Checking Django URLs:</strong><br>';
+            
+            for (const url of debugUrls) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    div.innerHTML += `${url} - Status: ${response.status}<br>`;
+                } catch (error) {
+                    div.innerHTML += `${url} - Error: ${error.message}<br>`;
+                }
+            }
+            
+            resultsDiv.appendChild(div);
+        }
+        
+        // Check on load
+        window.onload = checkAllEndpoints;
+    </script>
+</body>
+</html>

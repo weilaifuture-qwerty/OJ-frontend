@@ -1,0 +1,166 @@
+// Global layout fix to ensure everything is properly centered
+// This fixes the navbar and content alignment issues
+
+// Fix the navbar alignment - ensure it's consistent across all pages
+#header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 1000 !important;
+  
+  .oj-menu {
+    width: 100% !important;
+    max-width: 1600px !important; // Further increased width
+    margin: 0 auto !important;
+    padding: 0 40px !important; // More padding
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    
+    // Logo adjustments
+    .logo {
+      margin-right: 45px !important; // Increased space after logo
+      flex-shrink: 0 !important;
+    }
+    
+    // Ensure menu stays horizontal and doesn't wrap
+    &:deep(.ivu-menu-horizontal) {
+      white-space: nowrap !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+    }
+    
+    // Adjust menu item spacing - more spacious
+    &:deep(.ivu-menu-item) {
+      padding: 0 28px !important; // Increased padding for more spacing
+      flex-shrink: 0 !important; // Prevent menu items from shrinking
+    }
+    
+    &:deep(.ivu-menu-submenu) {
+      .ivu-menu-submenu-title {
+        padding: 0 28px !important; // Increased padding for more spacing
+      }
+      flex-shrink: 0 !important; // Prevent submenu from shrinking
+    }
+    
+    // User dropdown should be pushed to the right
+    .user-dropdown-component {
+      margin-left: auto !important;
+    }
+    
+    // Responsive design for navbar
+    @media (max-width: 1200px) {
+      max-width: 100% !important;
+      padding: 0 15px !important;
+      
+      &:deep(.ivu-menu-item) {
+        padding: 0 15px !important; // Reduce padding on smaller screens
+      }
+      
+      &:deep(.ivu-menu-submenu) {
+        .ivu-menu-submenu-title {
+          padding: 0 15px !important;
+        }
+      }
+    }
+    
+    @media (max-width: 768px) {
+      padding: 0 10px !important;
+      
+      &:deep(.ivu-menu-item) {
+        padding: 0 10px !important;
+        font-size: 14px !important;
+      }
+      
+      &:deep(.ivu-menu-submenu) {
+        .ivu-menu-submenu-title {
+          padding: 0 10px !important;
+          font-size: 14px !important;
+        }
+      }
+      
+      .logo {
+        margin-right: 15px !important;
+      }
+    }
+  }
+}
+
+// Ensure content-app is properly centered
+.content-app {
+  width: 100% !important;
+  max-width: 1600px !important; // Match navbar width
+  margin: 0 auto !important;
+  padding: 0 40px !important; // Match navbar padding
+  padding-top: 80px !important; // Add space for fixed navbar (60px) + some breathing room
+  position: relative !important;
+  box-sizing: border-box !important;
+  
+  @media (max-width: 768px) {
+    padding: 0 15px !important;
+    padding-top: 70px !important;
+  }
+}
+
+// Fix body and html to ensure no horizontal scroll
+html, body {
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+// Ensure the main app container is full width
+#app {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+// Override any ViewUI Row/Col that might be causing offset
+body > div > .ivu-row,
+#app > div > .ivu-row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+// Fix home container specifically
+.home-container {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  
+  .home-content {
+    max-width: 1200px !important; // Original home content width
+    margin: 0 auto !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    
+    @media (max-width: 768px) {
+      padding: 15px !important;
+    }
+  }
+}
+
+// Fix homework containers
+.homework-index-container {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-top: 20px !important; // Add some top padding for homework pages
+  
+  .admin-homework-list,
+  .student-homework-wrapper {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .homework-list-container {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+  }
+}

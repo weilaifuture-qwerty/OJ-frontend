@@ -6,6 +6,17 @@
   background: #f5f5f5;
 }
 
+// Fix Row/Col Layout Issues - CRITICAL FOR ALIGNMENT
+// Apply immediately to prevent flash of misaligned content
+.ivu-row {
+  &-flex {
+    &-center {
+      // Only fix the center alignment issue
+      justify-content: center;
+    }
+  }
+}
+
 // Table component fixes
 .ivu-table {
   font-size: 14px;

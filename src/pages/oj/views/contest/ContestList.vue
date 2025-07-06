@@ -1,6 +1,5 @@
 <template>
-  <Row type="flex" :gutter="18">
-    <Col :span="24">
+  <div class="contest-list-container">
     <Panel shadow>
       <template #title>{{$t('m.Contest_List')}}</template>
       <template #extra>
@@ -66,9 +65,7 @@
       :show-sizer="true" 
       @page-size-change="changeRoute"
       style="margin-top: 20px;"></Pagination>
-    </Col>
-  </Row>
-
+  </div>
 </template>
 
 <script>
@@ -267,6 +264,10 @@
   }
 </script>
 <style lang="less" scoped>
+  .contest-list-container {
+    width: 100%;
+  }
+  
   .filter {
     list-style: none;
     display: flex;

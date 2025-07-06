@@ -1,4 +1,5 @@
 <!-- eslint-disable -->
+<!-- unplugin-vue-components disabled -->
 <template>
   <el-menu class="vertical_menu"
            :router="true" :default-active="currentPath">
@@ -8,7 +9,7 @@
     <el-menu-item index="/"><i class="fas fa-tachometer-alt"></i> {{$t('m.Dashboard')}}</el-menu-item>
     <el-submenu index="general">
       <template #title><el-icon><Menu /></el-icon>{{$t('m.General')}}</template>
-      <el-menu-item index="/user">{{$t('m.User')}}</el-menu-item>
+      <el-menu-item index="/user">{{$t('m.Students')}}</el-menu-item>
       <el-menu-item index="/announcement">{{$t('m.Announcement')}}</el-menu-item>
       <el-menu-item index="/conf">{{$t('m.System_Config')}}</el-menu-item>
       <el-menu-item index="/judge-server">{{$t('m.Judge_Server')}}</el-menu-item>
@@ -17,7 +18,6 @@
     <el-submenu index="problem" v-if="hasProblemPermission">
       <template #title><i class="fas fa-bars"></i> {{$t('m.Problem')}}</template>
       <el-menu-item index="/problems">{{$t('m.Problem_List')}}</el-menu-item>
-      <el-menu-item index="/problem/batch_ops">{{$t('m.Export_Import_Problem')}}</el-menu-item>
 
     </el-submenu>
     <el-submenu index="contest">
@@ -31,7 +31,6 @@
       <template #title><i class="fas fa-book"></i> {{$t('m.Homework')}}</template>
       <el-menu-item index="/homework/admin-student" v-if="isSuperAdmin">{{$t('m.Admin_Student_Management')}}</el-menu-item>
       <el-menu-item index="/homework">{{$t('m.Homework_List')}}</el-menu-item>
-      <el-menu-item index="/homework/create">{{$t('m.Create_Homework')}}</el-menu-item>
     </el-submenu>
   </el-menu>
 </template>

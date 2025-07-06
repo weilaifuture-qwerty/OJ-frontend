@@ -100,8 +100,8 @@
                 popper-class="problem-tag-poper"
                 v-model="tagInput"
                 :trigger-on-focus="false"
-                @keyup.enter.native="addTag"
-                @select="addTag"
+                @keyup.enter.native="addTag()"
+                @select="handleTagSelect"
                 :fetch-suggestions="querySearch">
               </el-autocomplete>
               <el-button class="button-new-tag" v-else size="small" @click="inputVisible = true">+ {{$t('m.New_Tag')}}</el-button>
@@ -576,7 +576,17 @@
       addTag (tagName) {
         // If tagName is provided (from AI suggestion), use it
         // Otherwise use the input value
-        let tag = tagName || this.tagInput
+        let tag = ''
+        
+        // Check if tagName is a string (not an event object)
+        if (typeof tagName === 'string') {
+          tag = tagName
+        } else {
+          tag = this.tagInput
+        }
+        
+        // Trim whitespace and validate
+        tag = tag.trim()
         
         if (tag && !this.problem.tags.includes(tag)) {
           this.problem.tags.push(tag)
@@ -586,6 +596,12 @@
       },
       closeTag (tag) {
         this.problem.tags.splice(this.problem.tags.indexOf(tag), 1)
+      },
+      handleTagSelect (item) {
+        // el-autocomplete passes an object with 'value' property
+        if (item && item.value) {
+          this.addTag(item.value)
+        }
       },
       addSample () {
         this.problem.samples.push({input: '', output: ''})

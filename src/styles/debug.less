@@ -1,0 +1,133 @@
+// Visual debugging styles
+// Add colored borders to see layout structure
+
+.debug-mode {
+  // Main containers
+  .content-app {
+    border: 3px solid red !important;
+    position: relative;
+    
+    &::before {
+      content: 'content-app';
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: red;
+      color: white;
+      padding: 2px 5px;
+      font-size: 10px;
+      z-index: 1000;
+    }
+  }
+  
+  .home-container {
+    border: 3px solid blue !important;
+    position: relative;
+    
+    &::before {
+      content: 'home-container';
+      position: absolute;
+      top: 20px;
+      left: 0;
+      background: blue;
+      color: white;
+      padding: 2px 5px;
+      font-size: 10px;
+      z-index: 1000;
+    }
+  }
+  
+  .home-content {
+    border: 3px solid green !important;
+    position: relative;
+    
+    &::before {
+      content: 'home-content';
+      position: absolute;
+      top: 40px;
+      left: 0;
+      background: green;
+      color: white;
+      padding: 2px 5px;
+      font-size: 10px;
+      z-index: 1000;
+    }
+  }
+  
+  // ViewUI components
+  .ivu-row {
+    border: 2px dashed orange !important;
+    position: relative;
+    
+    &::after {
+      content: 'Row';
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: orange;
+      color: white;
+      padding: 2px 5px;
+      font-size: 10px;
+      z-index: 999;
+    }
+  }
+  
+  .ivu-col {
+    border: 2px dotted purple !important;
+    position: relative;
+    
+    &::after {
+      content: 'Col';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: purple;
+      color: white;
+      padding: 2px 5px;
+      font-size: 10px;
+      z-index: 999;
+    }
+  }
+  
+  .ivu-card {
+    border: 2px solid pink !important;
+  }
+  
+  // Feature grid
+  .feature-grid {
+    border: 2px solid cyan !important;
+    position: relative;
+    
+    &::before {
+      content: 'feature-grid';
+      position: absolute;
+      top: -20px;
+      left: 0;
+      background: cyan;
+      color: black;
+      padding: 2px 5px;
+      font-size: 10px;
+      z-index: 1000;
+    }
+  }
+  
+  // Show element dimensions
+  [data-debug]::after {
+    content: attr(data-debug);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background: rgba(0,0,0,0.8);
+    color: yellow;
+    padding: 2px 5px;
+    font-size: 10px;
+    z-index: 1001;
+  }
+}
+
+// Toggle debug mode with keyboard shortcut
+body.debug-mode {
+  * {
+    outline: 1px solid rgba(255,0,0,0.1) !important;
+  }
+}

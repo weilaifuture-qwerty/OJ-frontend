@@ -1,78 +1,83 @@
 <template>
-  <Row type="flex" justify="center" class="home-container">
-    <Col :span="24" :lg="{span: 22}" :xl="{span: 20}">
+  <div class="home-container">
+    <div class="home-content">
       <!-- Top Section - Key Features -->
-      <Row :gutter="20" class="top-section">
-        <Col :span="24" :md="{span: 12}" :lg="{span: 6}">
-          <SidebarStatus />
-        </Col>
-        <Col :span="24" :md="{span: 12}" :lg="{span: 6}">
-          <DailyCheckIn />
-        </Col>
-        <Col :span="24" :md="{span: 12}" :lg="{span: 6}">
-          <HomeworkSummary />
-        </Col>
-        <Col :span="24" :md="{span: 12}" :lg="{span: 6}">
-          <ProblemSuggestion :compact="true" />
-        </Col>
-      </Row>
+      <div class="top-section">
+        <div class="feature-grid">
+          <div class="feature-card">
+            <SidebarStatus />
+          </div>
+          <div class="feature-card">
+            <DailyCheckIn />
+          </div>
+          <div class="feature-card">
+            <HomeworkSummary />
+          </div>
+          <div class="feature-card">
+            <ProblemSuggestion :compact="true" />
+          </div>
+        </div>
+      </div>
       
       <!-- Main Content Section -->
-      <Row :gutter="20" class="main-section">
-        <Col :span="24" :lg="{span: 16}">
+      <div class="main-section">
+        <div class="main-content">
           <!-- Active Contests -->
-          <panel shadow v-if="contests.length" class="contest-panel">
-            <template #title>
-              <div class="section-header">
-                <Icon type="md-trophy" size="20" />
-                <span>Active Contests</span>
-              </div>
-            </template>
-            <div class="contest-grid">
+          <div v-if="contests.length" class="contest-card">
+            <div class="section-header">
+              <Icon type="md-trophy" size="20" />
+              <span>Active Contests</span>
+              <Button type="text" size="small" @click="$router.push('/contest')" class="view-all">
+                View All
+                <Icon type="ios-arrow-forward" />
+              </Button>
+            </div>
+            <div class="contest-list">
               <div 
                 v-for="(contest, idx) of contests.slice(0, 3)" 
                 :key="idx"
-                class="contest-card"
+                class="contest-item"
                 @click="goContestById(contest.id)">
-                <div class="contest-header">
+                <div class="contest-status" :class="getContestStatusClass(contest)"></div>
+                <div class="contest-content">
                   <h4>{{ contest.title }}</h4>
-                  <Tag :color="getContestStatusColor(contest)">{{ contest.rule_type }}</Tag>
-                </div>
-                <div class="contest-info">
-                  <div class="info-item">
-                    <Icon type="md-calendar" />
-                    <span>{{ formatTime(contest.start_time) }}</span>
+                  <div class="contest-meta">
+                    <span class="meta-item">
+                      <Icon type="md-calendar" size="14" />
+                      {{ formatTime(contest.start_time) }}
+                    </span>
+                    <span class="meta-item">
+                      <Icon type="md-time" size="14" />
+                      {{ getDuration(contest.start_time, contest.end_time) }}
+                    </span>
+                    <Tag :color="getContestStatusColor(contest)" size="small">
+                      {{ contest.rule_type }}
+                    </Tag>
                   </div>
-                  <div class="info-item">
-                    <Icon type="md-time" />
-                    <span>{{ getDuration(contest.start_time, contest.end_time) }}</span>
-                  </div>
                 </div>
-                <div class="contest-description" v-html="truncateDescription(contest.description)"></div>
+                <Icon type="ios-arrow-forward" class="contest-arrow" />
               </div>
             </div>
-          </panel>
+          </div>
           
           <!-- Announcements -->
           <Announcements class="announcement-panel"></Announcements>
-        </Col>
+        </div>
         
         <!-- Extended Sidebar -->
-        <Col :span="24" :lg="{span: 8}">
+        <div class="sidebar-content">
           <!-- Additional Problem Suggestions -->
-          <panel shadow class="extended-problems">
-            <template #title>
-              <div class="section-header">
-                <Icon type="md-bulb" size="20" />
-                <span>More Practice Problems</span>
-              </div>
-            </template>
+          <div class="sidebar-card">
+            <div class="section-header">
+              <Icon type="md-bulb" size="20" />
+              <span>More Practice Problems</span>
+            </div>
             <ProblemSuggestion :extended="true" :hideTitle="true" />
-          </panel>
-        </Col>
-      </Row>
-    </Col>
-  </Row>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -86,7 +91,8 @@
   import time from '@/utils/time'
   import { CONTEST_STATUS } from '@/utils/constants'
   import dayjs from 'dayjs'
-  import { Tag, Button, Icon, Row, Col } from 'view-ui-plus'
+  import { Tag, Button, Icon } from 'view-ui-plus'
+  // import { debugLayout } from '@/utils/layout-debug'
 
   export default {
     name: 'home',
@@ -99,9 +105,7 @@
       SidebarStatus,
       Tag,
       Button,
-      Icon,
-      Row,
-      Col
+      Icon
     },
     data () {
       return {
@@ -114,6 +118,12 @@
       api.getContestList(0, 5, params).then(res => {
         this.contests = res.data.data.results
       })
+      
+      // Debug layout after component mounts
+      // this.$nextTick(() => {
+      //   console.log('Home component mounted, debugging layout...')
+      //   debugLayout()
+      // })
     },
     methods: {
       getDuration (startTime, endTime) {
@@ -148,6 +158,15 @@
         div.innerHTML = description
         const text = div.textContent || div.innerText || ''
         return text.length > 100 ? text.substring(0, 100) + '...' : text
+      },
+      getContestStatusClass(contest) {
+        const now = new Date()
+        const start = new Date(contest.start_time)
+        const end = new Date(contest.end_time)
+        
+        if (now < start) return 'upcoming'
+        if (now >= start && now <= end) return 'active'
+        return 'ended'
       }
     }
   }
@@ -157,26 +176,57 @@
   .home-container {
     padding-top: 20px;
     min-height: calc(100vh - 60px);
-    background: #f7f8fa;
+    background: #f0f2f5;
+    width: 100%;
+  }
+  
+  .home-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
   }
   
   // Top section with key features
   .top-section {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     
-    .ivu-col {
-      margin-bottom: 15px;
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
       
-      @media (min-width: 768px) {
-        margin-bottom: 0;
+      @media (min-width: 992px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      @media (min-width: 768px) and (max-width: 991px) {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
     
-    // Ensure proper spacing between cards on medium screens
-    @media (min-width: 768px) and (max-width: 991px) {
-      .ivu-col-md-12:nth-child(1),
-      .ivu-col-md-12:nth-child(2) {
-        margin-bottom: 15px;
+    .feature-card {
+      height: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+      overflow: hidden;
+      
+      &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      }
+      
+      :deep(.ivu-card) {
+        box-shadow: none;
+        border: none;
+        background: transparent;
+        
+        .ivu-card-body {
+          padding: 20px;
+        }
       }
     }
   }
@@ -184,125 +234,193 @@
   // Main content section
   .main-section {
     margin-bottom: 40px;
+    display: flex;
+    gap: 20px;
+    
+    .main-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .sidebar-content {
+      width: 320px;
+      flex-shrink: 0;
+    }
+    
+    @media (max-width: 991px) {
+      flex-direction: column;
+      
+      .sidebar-content {
+        width: 100%;
+      }
+    }
+    
+    .contest-card, .sidebar-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
   }
   
   // Section headers
   .section-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: 500;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
     
     i {
-      color: #1890ff;
+      color: #667eea;
+    }
+    
+    span {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      flex: 1;
+    }
+    
+    .view-all {
+      color: #667eea;
+      font-weight: 500;
+      
+      &:hover {
+        color: #764ba2;
+      }
     }
   }
   
-  // Contest panel styling
-  .contest-panel {
-    margin-bottom: 20px;
+  // Contest list styling
+  .contest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .contest-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #fafbfc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
     
-    .contest-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 15px;
+    &:hover {
+      background: #f5f7fa;
+      padding-left: 20px;
       
-      @media (min-width: 992px) {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      .contest-arrow {
+        opacity: 1;
+        transform: translateX(0);
       }
     }
     
-    .contest-card {
-      padding: 16px;
-      background: #fff;
-      border: 1px solid #e8eaec;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s;
+    .contest-status {
+      width: 4px;
+      height: 40px;
+      border-radius: 2px;
+      margin-right: 16px;
+      flex-shrink: 0;
       
-      &:hover {
-        border-color: #1890ff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
+      &.active {
+        background: linear-gradient(180deg, #52c41a 0%, #73d13d 100%);
       }
       
-      .contest-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 12px;
-        
-        h4 {
-          margin: 0;
-          font-size: 16px;
-          font-weight: 500;
-          color: #17233d;
-          flex: 1;
-          margin-right: 10px;
-        }
+      &.upcoming {
+        background: linear-gradient(180deg, #1890ff 0%, #40a9ff 100%);
       }
       
-      .contest-info {
+      &.ended {
+        background: linear-gradient(180deg, #d9d9d9 0%, #bfbfbf 100%);
+      }
+    }
+    
+    .contest-content {
+      flex: 1;
+      min-width: 0;
+      
+      h4 {
+        margin: 0 0 8px 0;
+        font-size: 15px;
+        font-weight: 500;
+        color: #1a1a1a;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .contest-meta {
         display: flex;
+        align-items: center;
+        gap: 16px;
         flex-wrap: wrap;
-        gap: 15px;
-        margin-bottom: 12px;
         
-        .info-item {
+        .meta-item {
           display: flex;
           align-items: center;
-          gap: 5px;
+          gap: 4px;
           font-size: 13px;
-          color: #808695;
+          color: #8c8c8c;
           
           i {
             font-size: 14px;
           }
         }
       }
-      
-      .contest-description {
-        font-size: 13px;
-        color: #515a6e;
-        line-height: 1.6;
-      }
+    }
+    
+    .contest-arrow {
+      font-size: 18px;
+      color: #c0c4cc;
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.2s ease;
     }
   }
   
   // Announcement panel
   .announcement-panel {
     :deep(.ivu-card) {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       margin-bottom: 0;
     }
   }
   
-  // Extended problems panel
-  .extended-problems {
-    :deep(.ivu-card-body) {
-      padding-top: 0;
-    }
-  }
-  
-  // Make panels more compact on mobile
-  @media (max-width: 767px) {
+  // Sidebar styling
+  .sidebar-card {
     :deep(.ivu-card) {
-      margin-bottom: 15px;
-      
-      .ivu-card-head {
-        padding: 12px 16px;
-      }
+      box-shadow: none;
+      border: none;
+      margin: 0;
       
       .ivu-card-body {
-        padding: 16px;
+        padding: 0;
       }
     }
   }
   
-  // Optimize for above-the-fold content
-  @media (min-height: 800px) {
-    .top-section {
-      min-height: 180px;
+  // Responsive adjustments
+  @media (max-width: 767px) {
+    .section-header {
+      flex-wrap: wrap;
+      
+      span {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    }
+    
+    .contest-card, .sidebar-card {
+      padding: 16px;
     }
   }
 </style>

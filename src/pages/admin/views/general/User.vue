@@ -5,9 +5,9 @@
         <div class="title-section">
           <h1 class="page-title">
             <i class="el-icon-user-solid"></i>
-            User Management
+            Student Management
           </h1>
-          <p class="page-subtitle">Manage user accounts, permissions, and access control</p>
+          <p class="page-subtitle">Manage student accounts and assignments</p>
         </div>
         <div class="stats-section">
           <div class="stat-card">
@@ -44,17 +44,7 @@
           </transition>
         </div>
         <div class="action-right">
-          <el-select 
-            v-model="filterRole" 
-            placeholder="All Roles" 
-            size="large"
-            clearable
-            class="role-filter">
-            <el-option label="All Roles" value=""></el-option>
-            <el-option label="Regular User" value="Regular User"></el-option>
-            <el-option label="Admin" value="Admin"></el-option>
-            <el-option label="Super Admin" value="Super Admin"></el-option>
-          </el-select>
+          <!-- Role filter removed since we only show regular users -->
           <el-input 
             v-model="keyword" 
             prefix-icon="el-icon-search" 
@@ -569,12 +559,21 @@
         this.loadingTable = true
         api.getUserList((page - 1) * this.pageSize, this.pageSize, this.keyword).then(res => {
           this.loadingTable = false
-          this.total = res.data.data.total
-          let results = res.data.data.results
-          // Apply role filter if selected
+          // Filter to only show regular users
+          let allResults = res.data.data.results
+          let regularUsers = allResults.filter(user => {
+            const adminType = user.admin_type || 'Regular User'
+            return adminType === 'Regular User'
+          })
+          
+          // Apply additional role filter if selected
+          let results = regularUsers
           if (this.filterRole) {
-            results = results.filter(user => user.admin_type === this.filterRole)
+            results = regularUsers.filter(user => user.admin_type === this.filterRole)
           }
+          
+          // Update total count to reflect filtered users
+          this.total = regularUsers.length
           this.userList = results
         }, res => {
           this.loadingTable = false

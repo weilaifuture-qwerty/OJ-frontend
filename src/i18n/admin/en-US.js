@@ -6,6 +6,7 @@ export const m = {
   Dashboard: 'Dashboard',
   General: 'General',
   User: 'User',
+  Students: 'Students',
   Announcement: 'Announcement',
   System_Config: 'System Config',
   Judge_Server: 'Judge Server',

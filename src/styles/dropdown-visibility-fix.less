@@ -1,0 +1,47 @@
+// Fix to ensure dropdowns are visible when open
+// ViewUI Plus uses Popper.js for positioning
+
+// Base state - let ViewUI Plus control visibility
+.ivu-select-dropdown {
+  // Ensure basic visibility properties
+  background-color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.2);
+  border-radius: 4px;
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 1060;
+  
+  // The dropdown list inside
+  .ivu-select-dropdown-list {
+    padding: 5px 0;
+    list-style: none;
+    margin: 0;
+  }
+}
+
+// When positioned by Popper.js (transfer mode)
+.ivu-select-dropdown[x-placement],
+.ivu-select-dropdown[data-popper-placement] {
+  // These are positioned dropdowns that should be visible
+  opacity: 1;
+  visibility: visible;
+}
+
+// Fix for the specific CodeMirror dropdowns
+.codemirror-language-dropdown,
+.codemirror-theme-dropdown {
+  &[x-placement],
+  &[data-popper-placement] {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+// Ensure proper rendering in transfer mode
+body > .ivu-select-dropdown {
+  &[x-placement],
+  &[data-popper-placement] {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}

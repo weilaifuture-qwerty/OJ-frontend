@@ -1,8 +1,8 @@
 <template>
-  <Card dis-hover class="status-card" v-if="isAuthenticated && userProfile">
+  <Card :bordered="false" class="status-card" v-if="isAuthenticated && userProfile">
     <template #title>
       <div class="card-title">
-        <Icon type="md-pulse" size="18" />
+        <Icon type="md-pulse" />
         <span>My Status</span>
       </div>
     </template>

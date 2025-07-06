@@ -1,0 +1,310 @@
+// Specific fixes for Select and DatePicker components in ViewUI Plus
+
+// Select component fixes
+.ivu-select {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  vertical-align: middle;
+  color: #515a6e;
+  font-size: 14px;
+  line-height: normal;
+  position: relative;
+
+  &-selection {
+    display: block;
+    box-sizing: border-box;
+    outline: 0;
+    user-select: none;
+    cursor: pointer;
+    position: relative;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid #dcdee2;
+    transition: all .2s ease-in-out;
+    
+    &:hover,
+    &:focus {
+      border-color: #57a3f3;
+    }
+  }
+
+  &-single &-selection {
+    height: 32px;
+    position: relative;
+
+    .ivu-select-placeholder,
+    .ivu-select-selected-value {
+      display: block;
+      height: 30px;
+      line-height: 30px;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-left: 8px;
+      padding-right: 24px;
+    }
+
+    .ivu-select-placeholder {
+      color: #c5c8ce;
+    }
+  }
+
+  &-multiple &-selection {
+    min-height: 32px;
+    padding: 0 24px 0 4px;
+    
+    .ivu-select-placeholder {
+      display: block;
+      height: 30px;
+      line-height: 30px;
+      color: #c5c8ce;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-left: 4px;
+    }
+  }
+
+  &-dropdown {
+    width: inherit;
+    max-height: 200px;
+    overflow: auto;
+    margin: 5px 0;
+    padding: 5px 0;
+    background-color: #fff;
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+    position: absolute;
+    z-index: 900;
+    
+    &-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+  }
+
+  &-item {
+    margin: 0;
+    line-height: normal;
+    padding: 7px 16px;
+    clear: both;
+    color: #515a6e;
+    font-size: 14px !important;
+    white-space: nowrap;
+    list-style: none;
+    cursor: pointer;
+    transition: background .2s ease-in-out;
+
+    &:hover {
+      background-color: #f3f3f3;
+    }
+
+    &-selected {
+      color: #2d8cf0;
+      background-color: rgba(45,140,240,.1);
+    }
+
+    &-disabled {
+      color: #c5c8ce;
+      cursor: not-allowed;
+
+      &:hover {
+        color: #c5c8ce;
+        background-color: #fff;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  &-arrow {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    line-height: 1;
+    margin-top: -7px;
+    font-size: 14px;
+    color: #808695;
+    transition: all .2s ease-in-out;
+  }
+
+  &-visible {
+    .ivu-select-arrow {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// DatePicker component fixes
+.ivu-date-picker {
+  display: inline-block;
+  line-height: normal;
+  width: 100%;
+
+  &-rel {
+    position: relative;
+    width: 100%;
+  }
+
+  .ivu-input-wrapper {
+    width: 100%;
+  }
+
+  &-editor {
+    position: relative;
+    width: 100%;
+
+    .ivu-input {
+      width: 100%;
+    }
+
+    .ivu-icon {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #80848f;
+      transition: all .2s ease-in-out;
+      cursor: pointer;
+    }
+  }
+
+  &-transfer {
+    z-index: 1060;
+    position: absolute;
+    width: auto;
+    
+    .ivu-picker-panel {
+      margin: 0;
+    }
+  }
+
+  &-dropdown {
+    position: absolute;
+    z-index: 900;
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+    border-radius: 4px;
+    margin-top: 5px;
+  }
+}
+
+// Date picker panel
+.ivu-picker-panel {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.2);
+  
+  &-body-wrapper {
+    overflow: hidden;
+  }
+}
+
+// Time picker fixes for datetime mode
+.ivu-time-picker {
+  &-cells {
+    &-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      width: 100%;
+      max-height: 144px;
+      overflow: auto;
+    }
+
+    &-cell {
+      text-align: center;
+      height: 24px;
+      line-height: 24px;
+      margin: 0;
+      padding: 0 5px;
+      cursor: pointer;
+      transition: background .2s ease-in-out;
+      
+      &:hover {
+        background: #f3f3f3;
+      }
+
+      &-selected {
+        background: #2d8cf0;
+        color: #fff;
+      }
+    }
+  }
+}
+
+// Transfer mode fixes
+.ivu-transfer-no-max-height {
+  max-height: none;
+}
+
+// Ensure dropdowns appear above modals
+.ivu-modal-wrap {
+  .ivu-select-dropdown,
+  .ivu-date-picker-transfer {
+    z-index: 2050;
+  }
+}
+
+// Multiple select tag fixes
+.ivu-tag {
+  display: inline-block;
+  height: 22px;
+  line-height: 22px;
+  margin: 2px 4px 2px 0;
+  padding: 0 8px;
+  border-radius: 3px;
+  border: 1px solid #e8eaec;
+  background: #f7f7f7;
+  font-size: 12px;
+  vertical-align: middle;
+  opacity: 1;
+  overflow: hidden;
+  cursor: pointer;
+  
+  &-text {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  &-closable {
+    padding-right: 22px;
+  }
+
+  .ivu-icon-ios-close {
+    display: inline-block;
+    font-size: 14px;
+    transform: scale(.83333333);
+    cursor: pointer;
+    margin-left: 2px;
+    color: #666;
+    position: absolute;
+    right: 5px;
+    top: 0;
+    height: 100%;
+    
+    &:hover {
+      color: #2d8cf0;
+    }
+  }
+}
+
+// Form item validation state fixes
+.ivu-form-item-error {
+  .ivu-select {
+    .ivu-select-selection {
+      border-color: #ed4014;
+    }
+  }
+
+  .ivu-date-picker {
+    .ivu-input {
+      border-color: #ed4014;
+    }
+  }
+}

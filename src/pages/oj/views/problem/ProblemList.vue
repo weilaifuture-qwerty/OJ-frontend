@@ -1,6 +1,6 @@
 <template>
-  <Row type="flex" :gutter="18">
-    <Col :span=19>
+  <div class="problem-list-container">
+    <div class="problem-list-main">
     <Panel shadow>
       <template #title>{{$t('m.Problem_List')}}</template>
       <template #extra>
@@ -51,9 +51,9 @@
     <pagination
       :total="total" v-model:page-size="query.limit" @on-change="pushRouter" @on-page-size-change="pushRouter" v-model:current="query.page" :show-sizer="true"></pagination>
 
-    </Col>
+    </div>
 
-    <Col :span="5">
+    <div class="problem-list-sidebar">
     <Panel :padding="10">
       <template #title>
         <div class="taglist-title">{{$t('m.Tags')}}</div>
@@ -73,8 +73,8 @@
       </Button>
     </Panel>
     <Spin v-if="loadings.tag" fix size="large"></Spin>
-    </Col>
-  </Row>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -291,6 +291,33 @@
 </script>
 
 <style scoped lang="less">
+  .problem-list-container {
+    display: flex;
+    gap: 18px;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .problem-list-main {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .problem-list-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+  }
+  
+  @media (max-width: 1200px) {
+    .problem-list-container {
+      flex-direction: column;
+    }
+    
+    .problem-list-sidebar {
+      width: 100%;
+    }
+  }
+  
   .taglist-title {
     margin-left: -10px;
     margin-bottom: -10px;

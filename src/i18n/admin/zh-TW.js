@@ -6,6 +6,7 @@ export const m = {
   Dashboard: '儀表板',
   General: '基本設定',
   User: '使用者管理',
+  Students: '學生管理',
   Announcement: '公告管理',
   System_Config: '系統設定',
   Judge_Server: 'Judge 伺服器',

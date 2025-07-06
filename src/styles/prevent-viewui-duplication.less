@@ -1,0 +1,57 @@
+// Prevent ViewUI Layout/Sider from affecting global layout
+// Force correct layout regardless of ViewUI components loaded
+
+// Override header padding - ViewUI is adding 210px left padding
+#header {
+  padding: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  
+  // Also target when it has the ViewUI header class
+  &.ivu-layout-header {
+    padding: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+// Fix navbar margins - should be auto for centering
+#header .oj-menu {
+  margin: 0 auto !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+// When ViewUI adds the has-sider class, prevent padding
+body.ivu-layout-has-sider {
+  #header {
+    padding: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  // Fix any layout header within
+  .ivu-layout-header {
+    padding: 0 !important;
+    padding-left: 0 !important;
+  }
+}
+
+// Hide any ViewUI siders that shouldn't be visible
+.ivu-layout-sider {
+  display: none !important;
+}
+
+// Hide sider collapse trigger
+.ivu-layout-sider-trigger {
+  display: none !important;
+}
+
+// Ensure ViewUI layout doesn't affect our layout
+.ivu-layout {
+  &-header {
+    padding: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}

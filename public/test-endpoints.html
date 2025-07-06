@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Backend Endpoints</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .endpoint { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+        .success { background-color: #e7f5e7; }
+        .error { background-color: #f5e7e7; }
+        button { margin: 5px; padding: 5px 10px; }
+    </style>
+</head>
+<body>
+    <h1>Backend Endpoint Tester</h1>
+    
+    <div id="results"></div>
+    
+    <script>
+        const endpoints = [
+            { method: 'GET', url: '/api/student_homework?page=1&limit=10', name: 'Student Homework List' },
+            { method: 'GET', url: '/api/homework_progress', name: 'Homework Progress' },
+            { method: 'GET', url: '/api/admin_homework_list?page=1&limit=10', name: 'Admin Homework List' },
+            { method: 'GET', url: '/api/available_students', name: 'Available Students' },
+            { method: 'GET', url: '/api/problem?limit=10&offset=0&paging=true', name: 'Problem List (OJ)' },
+            { method: 'GET', url: '/api/profile', name: 'User Profile' },
+            { method: 'GET', url: '/api/user_rank?offset=0&limit=10&rule=acm', name: 'User Rank' },
+            { method: 'GET', url: '/api/website', name: 'Website Config' }
+        ];
+        
+        async function testEndpoint(endpoint) {
+            const div = document.createElement('div');
+            div.className = 'endpoint';
+            
+            try {
+                const response = await fetch(endpoint.url, {
+                    method: endpoint.method,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = text;
+                }
+                
+                if (response.ok) {
+                    div.className += ' success';
+                    div.innerHTML = `
+                        <strong>${endpoint.name}</strong><br>
+                        <code>${endpoint.method} ${endpoint.url}</code><br>
+                        Status: ${response.status} ${response.statusText}<br>
+                        Response: <pre>${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</pre>
+                    `;
+                } else {
+                    div.className += ' error';
+                    div.innerHTML = `
+                        <strong>${endpoint.name}</strong><br>
+                        <code>${endpoint.method} ${endpoint.url}</code><br>
+                        Status: ${response.status} ${response.statusText}<br>
+                        Error: ${typeof data === 'object' ? JSON.stringify(data) : data}
+                    `;
+                }
+            } catch (error) {
+                div.className += ' error';
+                div.innerHTML = `
+                    <strong>${endpoint.name}</strong><br>
+                    <code>${endpoint.method} ${endpoint.url}</code><br>
+                    Error: ${error.message}
+                `;
+            }
+            
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testAll() {
+            document.getElementById('results').innerHTML = '<p>Testing endpoints...</p>';
+            
+            for (const endpoint of endpoints) {
+                await testEndpoint(endpoint);
+            }
+        }
+        
+        // Test on load
+        window.onload = testAll;
+    </script>
+    
+    <button onclick="testAll()">Retest All Endpoints</button>
+</body>
+</html>

@@ -365,6 +365,22 @@ export default {
   },
   getManagedStudents () {
     return ajax('admin/student_list', 'get')
+  },
+  getHomework (id) {
+    return ajax('admin/homework', 'get', {
+      params: { id }
+    })
+  },
+  deleteHomework (id) {
+    return ajax('admin/homework', 'delete', {
+      params: { id }
+    })
+  },
+  updateHomework (id, data) {
+    return ajax('admin/homework', 'put', {
+      params: { id },
+      data
+    })
   }
 }
 

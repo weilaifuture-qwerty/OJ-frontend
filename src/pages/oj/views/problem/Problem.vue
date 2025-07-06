@@ -83,15 +83,15 @@
       </Panel>
       <!--problem main end-->
       <Card :padding="20" id="submit-code" dis-hover>
-        <CodeMirror v-model:value="code"
+        <CodeMirror v-model="code"
                     :languages="problem.languages"
                     :language="language"
                     :theme="theme"
                     @resetCode="onResetToTemplate"
                     @changeTheme="onChangeTheme"
                     @changeLang="onChangeLang"></CodeMirror>
-        <Row type="flex" justify="space-between">
-          <Col :span="10">
+        <div class="submit-footer">
+          <div class="status-section">
             <!-- Hidden Status Display
             <div class="status" v-if="statusVisible">
               <template v-if="!contestID || (contestID && OIContestRealTimePermission)">
@@ -118,9 +118,9 @@
             <div v-if="contestEnded">
               <Alert type="warning" show-icon>{{$t('m.Contest_has_ended')}}</Alert>
             </div>
-          </Col>
+          </div>
 
-          <Col :span="12">
+          <div class="submit-section">
             <template v-if="captchaRequired">
               <div class="captcha-container">
                 <Tooltip v-if="captchaRequired" content="Click to refresh" placement="top">
@@ -135,8 +135,8 @@
               <span v-if="submitting">{{$t('m.Submitting')}}</span>
               <span v-else>{{$t('m.Submit')}}</span>
             </Button>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </Card>
     </div>
 
@@ -229,7 +229,7 @@
           <div>
             <Icon type="ios-analytics"></Icon>
             <span class="card-title">{{$t('m.Statistic')}}</span>
-            <Button type="ghost" size="small" id="detail" @click="graphVisible = !graphVisible">Details</Button>
+            <Button type="text" size="small" id="detail" @click="graphVisible = !graphVisible">Details</Button>
           </div>
         </template>
         <div class="echarts">
@@ -244,7 +244,7 @@
       </div>
       <template #footer>
         <div>
-          <Button type="ghost" @click="graphVisible=false">{{$t('m.Close')}}</Button>
+          <Button @click="graphVisible=false">{{$t('m.Close')}}</Button>
         </div>
       </template>
     </Modal>
@@ -389,7 +389,7 @@
       changePie (problemData) {
         // Ensure statistic_info is an object
         if (!problemData.statistic_info || typeof problemData.statistic_info !== 'object') {
-          console.warn('Invalid statistic_info data')
+          // This is normal for new problems without submissions yet
           return
         }
         
@@ -438,12 +438,14 @@
         this.$router.push(route)
       },
       onChangeLang (newLang) {
-        if (this.problem.template[newLang]) {
+        console.log('[Problem] onChangeLang called with:', newLang, 'current:', this.language)
+        if (this.problem.template && this.problem.template[newLang]) {
           if (this.code.trim() === '') {
             this.code = this.problem.template[newLang]
           }
         }
         this.language = newLang
+        console.log('[Problem] Language updated to:', this.language)
       },
       onChangeTheme (newTheme) {
         this.theme = newTheme
@@ -703,6 +705,24 @@
   #submit-code {
     margin-top: 20px;
     margin-bottom: 20px;
+    
+    .submit-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      
+      .status-section {
+        flex: 1;
+      }
+      
+      .submit-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+    }
+    
     .status {
       float: left;
       span {

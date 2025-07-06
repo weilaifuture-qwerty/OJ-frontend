@@ -1,8 +1,10 @@
 <template>
-  <Card class="daily-check-in" shadow>
+  <Card class="daily-check-in" :bordered="false">
     <template #title>
-      <Icon type="md-calendar" size="20" />
-      {{ $t('m.Daily_Check_In') }}
+      <div class="card-title">
+        <Icon type="md-calendar" />
+        <span>{{ $t('m.Daily_Check_In') }}</span>
+      </div>
     </template>
     <div class="check-in-content">
       <div v-if="!isAuthenticated" class="login-prompt-compact">
@@ -11,8 +13,8 @@
       </div>
       <template v-else>
         <div class="compact-container">
-          <!-- Top row: Streak info and button -->
-          <div class="top-row">
+          <!-- Streak info on first row -->
+          <div class="streak-row">
             <div class="streak-info-compact">
               <div class="streak-item">
                 <Icon type="md-flame" size="20" :style="{ color: streakColor }" />
@@ -26,22 +28,34 @@
                 <span class="streak-label">best</span>
               </div>
             </div>
-            
+          </div>
+          
+          <!-- Check-in button on separate row -->
+          <div class="button-row">
             <Button 
               v-if="!checkedInToday"
               type="primary" 
               size="default"
               :loading="checking"
               @click="checkIn"
-              class="check-in-button-compact"
+              class="check-in-button-full"
             >
               <Icon type="md-checkmark" />
               Check In Today
             </Button>
-            <div v-else class="checked-status">
+            <div v-else class="checked-status-full">
               <Icon type="ios-checkmark-circle" size="24" color="#52c41a" />
-              <span>Done!</span>
+              <span>Checked in today!</span>
             </div>
+          </div>
+          
+          <!-- Debug info (remove in production) -->
+          <div v-if="showDebug" class="debug-info" style="font-size: 10px; background: #f0f0f0; padding: 8px; margin-bottom: 10px; border-radius: 4px;">
+            <div><strong>Debug Info:</strong></div>
+            <div>Today: {{ dayjs().format('YYYY-MM-DD HH:mm:ss') }}</div>
+            <div>Last Check-in: {{ userStreak.last_check_in }}</div>
+            <div>Check-in Days: {{ userStreak.check_in_days.join(', ') }}</div>
+            <div>Checked Today: {{ checkedInToday }}</div>
           </div>
           
           <!-- Calendar -->
@@ -77,6 +91,12 @@ import { Card, Button, Icon, Message } from 'view-ui-plus'
 import { useUserStore } from '@/stores/user'
 import api from '@oj/api'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+// Extend dayjs with UTC and timezone support
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 export default {
   name: 'DailyCheckIn',
@@ -93,7 +113,8 @@ export default {
         best_streak: 0,
         last_check_in: null,
         check_in_days: []
-      }
+      },
+      showDebug: false // Set to true to see debug info
     }
   },
   computed: {
@@ -106,10 +127,20 @@ export default {
         return false
       }
       
-      // Check if last check-in was today
+      // Simple solution: Check if last check-in was within 24 hours
+      // This handles timezone differences between frontend and backend
       const lastCheckIn = dayjs(this.userStreak.last_check_in)
-      const today = dayjs()
-      return lastCheckIn.isSame(today, 'day')
+      const now = dayjs()
+      const hoursSinceCheckIn = now.diff(lastCheckIn, 'hour')
+      
+      console.log('[DEBUG] checkedInToday:', {
+        'last_check_in': this.userStreak.last_check_in,
+        'now': now.format(),
+        'hoursSinceCheckIn': hoursSinceCheckIn,
+        'within24Hours': hoursSinceCheckIn < 24
+      })
+      
+      return hoursSinceCheckIn < 24
     },
     currentMonthYear() {
       return dayjs().format('MMMM YYYY')
@@ -130,7 +161,7 @@ export default {
       for (let i = 0; i < 7; i++) {
         const day = startOfWeek.add(i, 'day')
         const isChecked = this.userStreak.check_in_days.some(date => 
-          dayjs(date).isSame(day, 'day')
+          this.parseDate(date).startOf('day').isSame(day.startOf('day'), 'day')
         )
         
         days.push({
@@ -166,12 +197,24 @@ export default {
       let current = startWeek
       
       while (current.isBefore(endWeek) || current.isSame(endWeek, 'day')) {
-        const isChecked = this.userStreak.check_in_days.some(date => 
-          dayjs(date).isSame(current, 'day')
-        )
+        // Format both dates to YYYY-MM-DD for consistent comparison
+        const currentDateStr = current.format('YYYY-MM-DD')
+        const isChecked = this.userStreak.check_in_days.some(date => {
+          // Simple comparison since dates are already processed
+          const matches = date === currentDateStr
+          
+          if (matches) {
+            console.log('[DEBUG] Calendar match found:', {
+              'calendar date': currentDateStr,
+              'check-in date': date
+            })
+          }
+          
+          return matches
+        })
         
         days.push({
-          date: current.format('YYYY-MM-DD'),
+          date: currentDateStr,
           day: current.date(),
           checked: isChecked,
           isToday: current.isSame(dayjs(), 'day'),
@@ -194,33 +237,112 @@ export default {
       const userStore = useUserStore()
       userStore.changeModalStatus({ visible: true })
     },
+    
+    // Helper method to safely parse and compare dates
+    isSameDay(date1, date2) {
+      // Parse dates as UTC if they look like ISO strings, otherwise as local
+      const d1 = this.parseDate(date1)
+      const d2 = this.parseDate(date2)
+      return d1.startOf('day').isSame(d2.startOf('day'), 'day')
+    },
+    
+    // Parse date intelligently - if it's an ISO string, parse as UTC then convert to local
+    parseDate(date) {
+      if (typeof date === 'string' && date.includes('T') && date.includes('Z')) {
+        // ISO string with timezone - parse as UTC and convert to local
+        return dayjs.utc(date).local()
+      } else if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Date-only string (YYYY-MM-DD) - parse as local date
+        return dayjs(date).startOf('day')
+      } else {
+        // Other formats - parse normally
+        return dayjs(date)
+      }
+    },
+    
+    // Convert date to local date string to avoid timezone issues
+    toLocalDateString(date) {
+      const parsed = this.parseDate(date)
+      return parsed.format('YYYY-MM-DD')
+    },
     async loadStreakData() {
       try {
         const res = await api.getUserStreak()
         if (res.data && res.data.data) {
-          this.userStreak = res.data.data
+          // Process the dates to ensure they're in local timezone
+          const streakData = res.data.data
+          console.log('[DEBUG] Raw streak data from API:', streakData)
+          
+          const processedCheckInDays = (streakData.check_in_days || []).map(date => {
+            const original = date
+            let processed = date
+            
+            // If backend returns date-only strings and user is in negative timezone (behind UTC)
+            // we need to subtract one day since backend stored tomorrow's UTC date
+            if (date.match(/^\d{4}-\d{2}-\d{2}$/) && new Date().getTimezoneOffset() > 0) {
+              processed = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD')
+              console.log('[DEBUG] Adjusting date for timezone:', {
+                'original': original,
+                'adjusted': processed,
+                'timezone offset': new Date().getTimezoneOffset()
+              })
+            } else {
+              processed = this.toLocalDateString(date)
+            }
+            
+            return processed
+          })
+          
+          this.userStreak = {
+            ...streakData,
+            check_in_days: processedCheckInDays,
+            last_check_in: streakData.last_check_in ? 
+              this.toLocalDateString(streakData.last_check_in) : null
+          }
+          
+          console.log('[DEBUG] Processed streak data:', this.userStreak)
         } else {
           throw new Error('No streak data in response')
         }
       } catch (error) {
         // If API doesn't exist yet, use mock data
         const today = dayjs()
-        const hasCheckedInToday = this.userStreak.last_check_in && 
-                                  dayjs(this.userStreak.last_check_in).isSame(today, 'day')
-        
+        // Set initial state - user hasn't checked in today yet
         this.userStreak = {
-          current_streak: hasCheckedInToday ? 5 : 4,
+          current_streak: 4, // Current streak not including today
           best_streak: 12,
-          last_check_in: hasCheckedInToday ? today.format() : today.subtract(1, 'day').format(),
-          check_in_days: this.generateMockCheckIns()
+          last_check_in: today.subtract(1, 'day').startOf('day').format(), // Last check-in was yesterday
+          check_in_days: [] // Will be populated by generateMockCheckIns
         }
+        
+        // Generate mock check-in days
+        this.userStreak.check_in_days = this.generateMockCheckIns()
       }
     },
     async checkIn() {
       this.checking = true
+      
+      // Debug: Log current date information
+      const now = new Date()
+      const dayjs_now = dayjs()
+      console.log('[DEBUG] Check-in clicked at:', {
+        'JavaScript Date': now.toString(),
+        'ISO String': now.toISOString(),
+        'Local Date String': now.toLocaleDateString(),
+        'Local Time String': now.toLocaleTimeString(),
+        'Timezone Offset': now.getTimezoneOffset(),
+        'DayJS format': dayjs_now.format(),
+        'DayJS ISO': dayjs_now.toISOString(),
+        'DayJS startOf day': dayjs_now.startOf('day').format(),
+        'DayJS YYYY-MM-DD': dayjs_now.format('YYYY-MM-DD')
+      })
+      
       try {
         const res = await api.dailyCheckIn()
+        console.log('[DEBUG] Check-in API response:', res)
+        
         if (res.data && res.data.data) {
+          console.log('[DEBUG] Streak data received:', res.data.data)
           this.userStreak = res.data.data
           this.$Message.success(this.$t('m.Check_In_Success'))
           
@@ -234,8 +356,9 @@ export default {
       } catch (error) {
         // Mock implementation since backend doesn't have this endpoint yet
         // Check if continuing streak or starting new one
-        const lastCheckIn = this.userStreak.last_check_in ? dayjs(this.userStreak.last_check_in) : null
-        const yesterday = dayjs().subtract(1, 'day')
+        const lastCheckIn = this.userStreak.last_check_in ? 
+          dayjs(this.userStreak.last_check_in).startOf('day') : null
+        const yesterday = dayjs().subtract(1, 'day').startOf('day')
         
         if (lastCheckIn && lastCheckIn.isSame(yesterday, 'day')) {
           // Continue streak
@@ -246,12 +369,33 @@ export default {
         }
         
         this.userStreak.best_streak = Math.max(this.userStreak.best_streak, this.userStreak.current_streak)
-        this.userStreak.last_check_in = dayjs().format()
+        const checkInDate = dayjs().startOf('day')
+        this.userStreak.last_check_in = checkInDate.format()
+        
+        // Debug: Log what we're storing
+        console.log('[DEBUG] Storing check-in date:', {
+          'checkInDate': checkInDate.format(),
+          'checkInDate ISO': checkInDate.toISOString(),
+          'checkInDate YYYY-MM-DD': checkInDate.format('YYYY-MM-DD')
+        })
         
         // Add today to check_in_days if not already there
-        const today = dayjs().format('YYYY-MM-DD')
-        if (!this.userStreak.check_in_days.includes(today)) {
+        const today = checkInDate.format('YYYY-MM-DD')
+        const todayExists = this.userStreak.check_in_days.some(date => {
+          const isSame = dayjs(date).startOf('day').isSame(checkInDate, 'day')
+          console.log('[DEBUG] Comparing dates:', {
+            'existing date': date,
+            'today': today,
+            'isSame': isSame
+          })
+          return isSame
+        })
+        
+        if (!todayExists) {
+          console.log('[DEBUG] Adding today to check_in_days:', today)
           this.userStreak.check_in_days.push(today)
+        } else {
+          console.log('[DEBUG] Today already exists in check_in_days')
         }
         
         this.$Message.success(this.$t('m.Check_In_Success'))
@@ -279,21 +423,35 @@ export default {
       const days = []
       const today = dayjs()
       
-      // Generate some random check-ins for the current month (excluding today)
-      for (let i = 0; i < 10; i++) {
-        const randomDay = Math.floor(Math.random() * (today.date() - 1)) + 1
-        if (randomDay < today.date()) {
-          days.push(today.startOf('month').add(randomDay - 1, 'day').format('YYYY-MM-DD'))
-        }
+      // Add last 4 days for current streak (not including today if not checked in)
+      const hasCheckedToday = this.userStreak.last_check_in && 
+                            dayjs(this.userStreak.last_check_in).startOf('day').isSame(today.startOf('day'), 'day')
+      
+      // If user has checked in today, include today
+      if (hasCheckedToday) {
+        days.push(today.startOf('day').format('YYYY-MM-DD'))
       }
       
-      // Add last 4 days for current streak (not including today)
+      // Add previous consecutive days for current streak
       for (let i = 1; i <= 4; i++) {
-        const checkInDate = today.subtract(i, 'day').format('YYYY-MM-DD')
-        if (!days.includes(checkInDate)) {
-          days.push(checkInDate)
-        }
+        const checkInDate = today.subtract(i, 'day').startOf('day').format('YYYY-MM-DD')
+        days.push(checkInDate)
       }
+      
+      // Add some random check-ins from earlier in the month (for demonstration)
+      const currentMonth = today.month()
+      const currentYear = today.year()
+      
+      // Add a few scattered check-ins from earlier in the month
+      const scatteredDays = [3, 7, 11, 15, 18]
+      scatteredDays.forEach(day => {
+        if (day < today.date() - 5) { // Don't overlap with streak days
+          const checkDate = dayjs().year(currentYear).month(currentMonth).date(day)
+          if (checkDate.isBefore(today.subtract(5, 'day'))) {
+            days.push(checkDate.format('YYYY-MM-DD'))
+          }
+        }
+      })
       
       // Sort and remove duplicates
       return [...new Set(days)].sort()
@@ -329,18 +487,22 @@ export default {
   }
   
   .compact-container {
-    .top-row {
+    .streak-row {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      gap: 15px;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    
+    .button-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
     }
     
     .streak-info-compact {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 20px;
       
       .streak-item {
         display: flex;
@@ -366,15 +528,18 @@ export default {
       }
     }
     
-    .check-in-button-compact {
+    .check-in-button-full {
+      width: 100%;
+      max-width: 200px;
       i {
         margin-right: 4px;
       }
     }
     
-    .checked-status {
+    .checked-status-full {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       color: #52c41a;
       font-size: 14px;

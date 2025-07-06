@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Language Dropdown</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+    <style>
+        body {
+            padding: 50px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        /* Debug styles */
+        .ivu-select-dropdown {
+            background: yellow !important;
+            border: 2px solid red !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="test-container">
+        <h1>Language Dropdown Test</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Basic Select</h3>
+            <select style="width: 200px; padding: 5px;">
+                <option>C++</option>
+                <option>Python3</option>
+                <option>Java</option>
+            </select>
+            <p>Native HTML select to verify basic functionality</p>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: ViewUI Plus Select (v-model)</h3>
+            <i-select v-model="language1" style="width: 200px">
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <div class="result">Selected: {{ language1 }}</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: ViewUI Plus Select (with transfer)</h3>
+            <i-select v-model="language2" style="width: 200px" transfer>
+                <i-option value="C++">C++</i-option>
+                <i-option value="Python3">Python3</i-option>
+                <i-option value="Java">Java</i-option>
+            </i-select>
+            <div class="result">Selected: {{ language2 }}</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: ViewUI Plus Select (model-value + on-change)</h3>
+            <i-select 
+                :model-value="language3" 
+                @on-change="handleChange" 
+                style="width: 200px" 
+                transfer
+                placement="bottom-start">
+                <i-option v-for="lang in languages" :key="lang" :value="lang">
+                    {{ lang }}
+                </i-option>
+            </i-select>
+            <div class="result">Selected: {{ language3 }}</div>
+        </div>
+
+        <div class="test-section">
+            <h3>Console Output</h3>
+            <div class="result" style="max-height: 200px; overflow-y: auto;">
+                <div v-for="(log, index) in logs" :key="index">
+                    {{ log }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/manifest.js"></script>
+    <script src="/static/js/vendor.js"></script>
+    <script>
+        // Check if Vue and ViewUIPlus are loaded
+        console.log('Vue available:', typeof Vue !== 'undefined');
+        console.log('ViewUIPlus available:', typeof ViewUIPlus !== 'undefined');
+        
+        if (typeof Vue !== 'undefined' && typeof ViewUIPlus !== 'undefined') {
+            const { createApp } = Vue;
+            
+            const app = createApp({
+                data() {
+                    return {
+                        language1: 'C++',
+                        language2: 'Python3',
+                        language3: 'Java',
+                        languages: ['C', 'C++', 'Java', 'Python2', 'Python3', 'JavaScript', 'Go', 'Rust'],
+                        logs: ['Test started...']
+                    }
+                },
+                methods: {
+                    handleChange(value) {
+                        this.log(`Language changed to: ${value}`);
+                        this.language3 = value;
+                    },
+                    log(message) {
+                        const timestamp = new Date().toLocaleTimeString();
+                        this.logs.push(`[${timestamp}] ${message}`);
+                        console.log(message);
+                    }
+                },
+                mounted() {
+                    this.log('Component mounted');
+                    this.log(`Initial languages: ${this.languages.join(', ')}`);
+                    
+                    // Check for dropdown elements
+                    setTimeout(() => {
+                        const dropdowns = document.querySelectorAll('.ivu-select-dropdown');
+                        this.log(`Found ${dropdowns.length} dropdown elements`);
+                        
+                        const selects = document.querySelectorAll('.ivu-select');
+                        this.log(`Found ${selects.length} select elements`);
+                    }, 500);
+                }
+            });
+            
+            app.use(ViewUIPlus);
+            app.mount('#app');
+        } else {
+            document.getElementById('app').innerHTML = '<h2>Error: Vue or ViewUIPlus not loaded</h2>';
+        }
+    </script>
+</body>
+</html>
