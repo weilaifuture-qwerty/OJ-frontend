@@ -1,3 +1,4 @@
+<!-- unplugin-vue-components disabled -->
 <template>
   <div class="admin-student-management">
     <Panel :title="$t('m.Admin_Student_Management')">
@@ -81,7 +82,7 @@
                       @confirm="removeAssignment(scope.row.id, props.row.id)"
                     >
                       <template #reference>
-                        <el-button type="danger" link size="small">
+                        <el-button type="danger" :link="true" size="small">
                           <Icon type="md-trash" />
                           Remove
                         </el-button>
@@ -219,7 +220,6 @@
                 <template #default="scope">
                   <el-button
                     type="primary"
-                    link
                     size="small"
                     @click="editAdminUser(scope.row)"
                   >
@@ -233,7 +233,6 @@
                     <template #reference>
                       <el-button
                         type="danger"
-                        link
                         size="small"
                         :disabled="scope.row.admin_type === 'Super Admin'"
                       >
@@ -335,7 +334,7 @@
               </h4>
               <el-button
                 v-if="assignForm.student_ids.length > 0"
-                type="text"
+                type=""
                 size="small"
                 @click="clearAllSelected"
               >

@@ -87,12 +87,6 @@
                   @close="closeTag(tag)"
                 >{{tag}}</el-tag>
               </span>
-              <AITagSuggestion 
-                :problem="problem" 
-                :existingTags="problem.tags"
-                @add-tag="addTag"
-                v-if="!inputVisible"
-              />
               <el-autocomplete
                 v-if="inputVisible"
                 size="mini"
@@ -100,8 +94,8 @@
                 popper-class="problem-tag-poper"
                 v-model="tagInput"
                 :trigger-on-focus="false"
-                @keyup.enter.native="addTag()"
-                @select="handleTagSelect"
+                @keyup.enter.native="addTag"
+                @select="addTag"
                 :fetch-suggestions="querySearch">
               </el-autocomplete>
               <el-button class="button-new-tag" v-else size="small" @click="inputVisible = true">+ {{$t('m.New_Tag')}}</el-button>
@@ -200,88 +194,17 @@
               </el-radio-group>
             </el-form-item>
           </el-col>
-          <el-col :span="12">
-            <el-form-item :label="$t('m.TestCase')" :error="error.testCase">
-              <div class="test-case-section">
-                <el-tabs v-model="testCaseTab" class="test-case-tabs">
-                  <el-tab-pane label="Upload File" name="upload">
-                    <el-upload
-                      ref="testCaseUpload"
-                      :action="testCaseUploadUrl"
-                      name="file"
-                      :data="{spj: problem.spj}"
-                      :headers="uploadHeaders"
-                      :show-file-list="true"
-                      :on-success="uploadSucceeded"
-                      :on-error="uploadFailed"
-                      :before-upload="beforeUpload"
-                      :auto-upload="true"
-                      drag
-                      class="test-case-upload">
-                      <i class="el-icon-upload"></i>
-                      <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-                      <template #tip>
-                        <div class="el-upload__tip">Supports zip, rar, 7z files</div>
-                      </template>
-                    </el-upload>
-                  </el-tab-pane>
-                  <el-tab-pane label="Create Manually" name="manual">
-                    <div class="manual-test-cases">
-                      <div class="test-case-actions">
-                        <el-button size="small" @click="addTestCase" icon="el-icon-plus">Add Test Case</el-button>
-                        <el-button size="small" @click="generateTestCaseFile" type="primary" icon="el-icon-download" :disabled="!manualTestCases.length">Generate File</el-button>
-                        <el-dropdown @command="applyTestCaseTemplate" style="margin-left: 10px;">
-                          <el-button size="small" type="text">
-                            Templates <i class="el-icon-arrow-down el-icon--right"></i>
-                          </el-button>
-                          <template #dropdown>
-                            <el-dropdown-menu>
-                            <el-dropdown-item command="samples">Copy from Samples</el-dropdown-item>
-                            <el-dropdown-item command="simple">Simple (Single Number)</el-dropdown-item>
-                            <el-dropdown-item command="array">Array Input</el-dropdown-item>
-                            <el-dropdown-item command="matrix">Matrix Input</el-dropdown-item>
-                            <el-dropdown-item command="string">String Processing</el-dropdown-item>
-                            </el-dropdown-menu>
-                          </template>
-                        </el-dropdown>
-                      </div>
-                      <div v-for="(testCase, index) in manualTestCases" :key="index" class="manual-test-case">
-                        <div class="test-case-header">
-                          <h4>Test Case {{index + 1}}</h4>
-                          <el-button size="mini" type="danger" icon="el-icon-delete" circle @click="removeTestCase(index)"></el-button>
-                        </div>
-                        <el-row :gutter="20">
-                          <el-col :span="12">
-                            <label>Input:</label>
-                            <el-input
-                              type="textarea"
-                              v-model="testCase.input"
-                              :rows="3"
-                              placeholder="Enter input data">
-                            </el-input>
-                          </el-col>
-                          <el-col :span="12">
-                            <label>Output:</label>
-                            <el-input
-                              type="textarea"
-                              v-model="testCase.output"
-                              :rows="3"
-                              placeholder="Enter expected output">
-                            </el-input>
-                          </el-col>
-                        </el-row>
-                      </div>
-                    </div>
-                  </el-tab-pane>
-                </el-tabs>
-                <div v-if="testCaseUploaded && problem.test_case_id" style="margin-top: 10px; color: #67C23A;">
-                  <i class="el-icon-success"></i> Test case uploaded (ID: {{problem.test_case_id}})
-                  <el-button size="mini" type="text" @click="downloadTestCase" icon="el-icon-download">Download</el-button>
-                </div>
-                <div v-else-if="mode === 'edit'" style="margin-top: 10px; color: #F56C6C;">
-                  <i class="el-icon-warning"></i> No test case uploaded
-                </div>
-              </div>
+          <el-col :span="6">
+            <el-form-item :label="$t('m.TestCase')" :error="error.testcase">
+              <el-upload
+                action="/api/admin/test_case"
+                name="file"
+                :data="{spj: problem.spj}"
+                :show-file-list="true"
+                :on-success="uploadSucceeded"
+                :on-error="uploadFailed">
+                <el-button size="small" type="primary" icon="el-icon-fa-upload">Choose File</el-button>
+              </el-upload>
             </el-form-item>
           </el-col>
 
@@ -320,7 +243,7 @@
               <el-table-column
                 prop="score"
                 :label="$t('m.Score')">
-                <template #default="scope">
+                <template slot-scope="scope">
                   <el-input
                     size="small"
                     :placeholder="$t('m.Score')"
@@ -346,7 +269,6 @@
   import Simditor from '../../components/Simditor'
   import Accordion from '../../components/Accordion'
   import CodeMirror from '../../components/CodeMirror'
-  import AITagSuggestion from '../../components/AITagSuggestion'
   import api from '../../api'
 
   export default {
@@ -354,7 +276,6 @@
     components: {
       Simditor,
       Accordion,
-      AITagSuggestion,
       CodeMirror
     },
     data () {
@@ -362,27 +283,8 @@
         rules: {
           _id: {required: true, message: 'Display ID is required', trigger: 'blur'},
           title: {required: true, message: 'Title is required', trigger: 'blur'},
-          description: {required: true, message: 'Description is required', trigger: 'blur', validator: (rule, value, callback) => {
-            if (!value || value.trim() === '') {
-              callback(new Error('Description cannot be empty'))
-            } else {
-              callback()
-            }
-          }},
-          input_description: {required: true, message: 'Input Description is required', trigger: 'blur', validator: (rule, value, callback) => {
-            if (!value || value.trim() === '') {
-              callback(new Error('Input Description cannot be empty'))
-            } else {
-              callback()
-            }
-          }},
-          output_description: {required: true, message: 'Output Description is required', trigger: 'blur', validator: (rule, value, callback) => {
-            if (!value || value.trim() === '') {
-              callback(new Error('Output Description cannot be empty'))
-            } else {
-              callback()
-            }
-          }}
+          input_description: {required: true, message: 'Input Description is required', trigger: 'blur'},
+          output_description: {required: true, message: 'Output Description is required', trigger: 'blur'}
         },
         loadingCompile: false,
         mode: '',
@@ -404,8 +306,6 @@
         spjMode: '',
         disableRuleType: false,
         routeName: '',
-        testCaseTab: 'upload',
-        manualTestCases: [],
         error: {
           tags: '',
           spj: '',
@@ -469,25 +369,12 @@
           let funcName = {'edit-problem': 'getProblem', 'edit-contest-problem': 'getContestProblem'}[this.routeName]
           api[funcName](this.$route.params.problemId).then(problemRes => {
             let data = problemRes.data.data
-            console.log('Loaded problem data:', data)
             if (!data.spj_code) {
               data.spj_code = ''
             }
             data.spj_language = data.spj_language || 'C'
-            // Ensure test_case_id and test_case_score are present
-            if (!data.test_case_id) {
-              data.test_case_id = ''
-            }
-            if (!data.test_case_score) {
-              data.test_case_score = []
-            }
             this.problem = data
-            // Only set testCaseUploaded to true if test_case_id exists
-            this.testCaseUploaded = !!data.test_case_id
-            console.log('Test case uploaded status:', this.testCaseUploaded, 'Test case ID:', data.test_case_id)
-          }).catch(err => {
-            console.error('Failed to load problem:', err)
-            this.$error('Failed to load problem data')
+            this.testCaseUploaded = true
           })
         } else {
           this.title = this.$i18n.t('m.Add_Problem')
@@ -496,20 +383,6 @@
           }
         }
       })
-    },
-    computed: {
-      testCaseUploadUrl() {
-        return '/api/admin/test_case'
-      },
-      uploadHeaders() {
-        const csrfToken = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('csrftoken='))
-          ?.split('=')[1]
-        return {
-          'X-CSRFToken': csrfToken || ''
-        }
-      }
     },
     watch: {
       '$route' () {
@@ -573,23 +446,10 @@
         this.problem.test_case_score = []
         this.problem.test_case_id = ''
       },
-      addTag (tagName) {
-        // If tagName is provided (from AI suggestion), use it
-        // Otherwise use the input value
-        let tag = ''
-        
-        // Check if tagName is a string (not an event object)
-        if (typeof tagName === 'string') {
-          tag = tagName
-        } else {
-          tag = this.tagInput
-        }
-        
-        // Trim whitespace and validate
-        tag = tag.trim()
-        
-        if (tag && !this.problem.tags.includes(tag)) {
-          this.problem.tags.push(tag)
+      addTag () {
+        let inputValue = this.tagInput
+        if (inputValue) {
+          this.problem.tags.push(inputValue)
         }
         this.inputVisible = false
         this.tagInput = ''
@@ -597,291 +457,30 @@
       closeTag (tag) {
         this.problem.tags.splice(this.problem.tags.indexOf(tag), 1)
       },
-      handleTagSelect (item) {
-        // el-autocomplete passes an object with 'value' property
-        if (item && item.value) {
-          this.addTag(item.value)
-        }
-      },
       addSample () {
         this.problem.samples.push({input: '', output: ''})
       },
       deleteSample (index) {
         this.problem.samples.splice(index, 1)
       },
-      uploadSucceeded (response, file, fileList) {
-        console.log('Upload response:', response)
+      uploadSucceeded (response) {
         if (response.error) {
-          this.$error(response.data || 'Upload failed')
+          this.$error(response.data)
           return
         }
-        if (!response.data || !response.data.id) {
-          console.error('Invalid response structure:', response)
-          this.$error('Invalid response from server - please check console for details')
-          return
-        }
-        let testCaseList = response.data.info || []
-        
-        // Log test case info for debugging
-        console.log('Test case list:', testCaseList)
-        
-        for (let testCase of testCaseList) {
-          testCase.score = (100 / testCaseList.length).toFixed(0)
-          if (!testCase.output_name && this.problem.spj) {
-            testCase.output_name = '-'
+        let fileList = response.data.info
+        for (let file of fileList) {
+          file.score = (100 / fileList.length).toFixed(0)
+          if (!file.output_name && this.problem.spj) {
+            file.output_name = '-'
           }
         }
-        this.problem.test_case_score = testCaseList
-        this.problem.test_case_id = response.data.id
+        this.problem.test_case_score = fileList
         this.testCaseUploaded = true
-        // Clear any previous error
-        this.error.testCase = ''
-        this.$success('Test case uploaded successfully')
-        
-        // Clear manual test cases after successful upload
-        if (this.testCaseTab === 'manual') {
-          this.manualTestCases = []
-        }
+        this.problem.test_case_id = response.data.id
       },
-      uploadFailed (err, file, fileList) {
-        console.error('Upload failed:', err)
-        this.$error('Upload failed: ' + (err.message || 'Unknown error'))
-      },
-      beforeUpload (file) {
-        console.log('Uploading file:', file.name)
-        // Check file extension
-        const allowedExtensions = ['.zip', '.rar', '.7z']
-        const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
-        if (!allowedExtensions.includes(extension)) {
-          this.$error('Only zip, rar, and 7z files are allowed')
-          return false
-        }
-        return true
-      },
-      addTestCase () {
-        this.manualTestCases.push({
-          input: '',
-          output: ''
-        })
-      },
-      removeTestCase (index) {
-        this.manualTestCases.splice(index, 1)
-      },
-      async generateTestCaseFile () {
-        if (!this.manualTestCases.length) {
-          this.$error('Please add at least one test case')
-          return
-        }
-        
-        // Validate test cases
-        for (let i = 0; i < this.manualTestCases.length; i++) {
-          const tc = this.manualTestCases[i]
-          // Trim to check if actually empty (not just whitespace)
-          if (!tc.input || !tc.output || tc.input.trim() === '' || tc.output.trim() === '') {
-            this.$error(`Test case ${i + 1} is incomplete`)
-            return
-          }
-        }
-        
-        try {
-          // Create a zip file with test cases
-          console.log('Manual test cases:', this.manualTestCases)
-          const JSZip = (await import('jszip')).default
-          const zip = new JSZip()
-          
-          this.manualTestCases.forEach((tc, index) => {
-            const num = (index + 1).toString()
-            console.log(`Adding test case ${num}: input="${tc.input}", output="${tc.output}"`)
-            // Use the content as-is, the backend will handle line endings
-            zip.file(`${num}.in`, tc.input)
-            zip.file(`${num}.out`, tc.output)
-          })
-          
-          const content = await zip.generateAsync({type: 'blob'})
-          
-          // Create a File object
-          const file = new File([content], 'test_cases.zip', {
-            type: 'application/x-zip-compressed'
-          })
-          
-          console.log('Generated zip file:', file)
-          console.log('File size:', file.size)
-          console.log('File type:', file.type)
-          
-          // Download the file to verify it's correct (optional debug step)
-          if (false) { // Set to true to debug
-            const url = URL.createObjectURL(file)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'test_cases_debug.zip'
-            a.click()
-            URL.revokeObjectURL(url)
-          }
-          
-          // Use the el-upload component's upload mechanism
-          // This ensures we use the exact same upload process as the normal file upload
-          this.testCaseTab = 'upload'
-          await this.$nextTick()
-          
-          // Get the upload component
-          const uploadComponent = this.$refs.testCaseUpload
-          if (uploadComponent) {
-            // Clear any existing files
-            uploadComponent.clearFiles()
-            
-            // Manually trigger the upload with our generated file
-            const fileList = [{
-              name: file.name,
-              size: file.size,
-              type: file.type,
-              uid: Date.now(),
-              raw: file,
-              status: 'ready'
-            }]
-            
-            // Call the upload method
-            uploadComponent.handleStart(file)
-            uploadComponent.submit()
-            
-            this.$message('Uploading generated test cases...')
-          } else {
-            // Fallback to manual upload if component ref not available
-            this.manualUpload(file)
-          }
-        } catch (err) {
-          this.$error('Failed to generate test case file: ' + err.message)
-        }
-      },
-      
-      manualUpload(file) {
-        // Fallback manual upload method
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('spj', this.problem.spj)
-        
-        const xhr = new XMLHttpRequest()
-        
-        xhr.onload = () => {
-          try {
-            const response = JSON.parse(xhr.responseText)
-            console.log('Manual upload response:', response)
-            this.uploadSucceeded(response, file, [file])
-          } catch (e) {
-            this.$error('Invalid response from server')
-          }
-        }
-        
-        xhr.onerror = () => {
-          this.$error('Upload failed')
-        }
-        
-        xhr.open('POST', '/api/admin/test_case')
-        
-        const csrfToken = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('csrftoken='))
-          ?.split('=')[1]
-        
-        if (csrfToken) {
-          xhr.setRequestHeader('X-CSRFToken', csrfToken)
-        }
-        
-        xhr.send(formData)
-      },
-      downloadTestCase () {
-        if (this.problem.test_case_id) {
-          window.open(`/admin/test_case?problem_id=${this.problem.id}`)
-        }
-      },
-      loadSampleAsTestCase () {
-        if (this.problem.samples && this.problem.samples.length > 0) {
-          // Clear existing manual test cases
-          this.manualTestCases = []
-          
-          // Copy each sample as a test case
-          this.problem.samples.forEach(sample => {
-            if (sample.input && sample.output) {
-              this.manualTestCases.push({
-                input: sample.input,
-                output: sample.output
-              })
-            }
-          })
-          
-          this.$success(`Loaded ${this.manualTestCases.length} test case(s) from samples`)
-          this.testCaseTab = 'manual'
-        }
-      },
-      applyTestCaseTemplate (command) {
-        switch (command) {
-          case 'samples':
-            this.loadSampleAsTestCase()
-            break
-          
-          case 'simple':
-            // Template for simple number input/output problems
-            this.manualTestCases = [
-              { input: '5', output: '25' },
-              { input: '10', output: '100' },
-              { input: '0', output: '0' },
-              { input: '-5', output: '25' },
-              { input: '1000', output: '1000000' }
-            ]
-            this.$success('Applied simple number template (modify outputs as needed)')
-            break
-          
-          case 'array':
-            // Template for array input problems
-            this.manualTestCases = [
-              { 
-                input: '5\n1 2 3 4 5', 
-                output: '15' 
-              },
-              { 
-                input: '3\n10 20 30', 
-                output: '60' 
-              },
-              { 
-                input: '1\n100', 
-                output: '100' 
-              },
-              { 
-                input: '4\n-1 -2 -3 -4', 
-                output: '-10' 
-              }
-            ]
-            this.$success('Applied array input template (modify as needed)')
-            break
-          
-          case 'matrix':
-            // Template for matrix input problems
-            this.manualTestCases = [
-              { 
-                input: '2 2\n1 2\n3 4', 
-                output: '10' 
-              },
-              { 
-                input: '3 3\n1 0 0\n0 1 0\n0 0 1', 
-                output: '3' 
-              }
-            ]
-            this.$success('Applied matrix input template (modify as needed)')
-            break
-          
-          case 'string':
-            // Template for string processing problems
-            this.manualTestCases = [
-              { input: 'hello', output: 'HELLO' },
-              { input: 'world', output: 'WORLD' },
-              { input: 'Hello World', output: 'HELLO WORLD' },
-              { input: '123abc', output: '123ABC' },
-              { input: '', output: '' }
-            ]
-            this.$success('Applied string processing template (modify as needed)')
-            break
-        }
-        
-        this.testCaseTab = 'manual'
+      uploadFailed () {
+        this.$error('Upload failed')
       },
       compileSPJ () {
         let data = {
@@ -941,7 +540,7 @@
           this.$error(this.error.languages)
           return
         }
-        if (!this.testCaseUploaded || !this.problem.test_case_id) {
+        if (!this.testCaseUploaded) {
           this.error.testCase = 'Test case is not uploaded yet'
           this.$error(this.error.testCase)
           return
@@ -976,17 +575,13 @@
         if (funcName === 'editContestProblem') {
           this.problem.contest_id = this.contest.id
         }
-        console.log('Submitting problem data:', this.problem)
-        console.log('Test case ID:', this.problem.test_case_id)
-        console.log('Test case scores:', this.problem.test_case_score)
         api[funcName](this.problem).then(res => {
           if (this.routeName === 'create-contest-problem' || this.routeName === 'edit-contest-problem') {
             this.$router.push({name: 'contest-problem-list', params: {contestId: this.$route.params.contestId}})
           } else {
             this.$router.push({name: 'problem-list'})
           }
-        }).catch(err => {
-          console.error('Failed to save problem:', err)
+        }).catch(() => {
         })
       }
     }
@@ -1041,72 +636,6 @@
       margin-bottom: 10px;
     }
 
-  }
-  .test-case-section {
-    width: 100%;
-    
-    .test-case-tabs {
-      margin-top: 10px;
-    }
-    
-    .test-case-upload {
-      width: 100%;
-      
-      /deep/ .el-upload-dragger {
-        width: 100%;
-        height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        
-        .el-icon-upload {
-          font-size: 40px;
-          color: #C0C4CC;
-          margin-bottom: 10px;
-        }
-      }
-    }
-    
-    .manual-test-cases {
-      max-height: 400px;
-      overflow-y: auto;
-      
-      .test-case-actions {
-        margin-bottom: 15px;
-        display: flex;
-        gap: 10px;
-      }
-      
-      .manual-test-case {
-        background: #f5f7fa;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 4px;
-        border: 1px solid #e4e7ed;
-        
-        .test-case-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-          
-          h4 {
-            margin: 0;
-            font-size: 14px;
-            font-weight: 600;
-          }
-        }
-        
-        label {
-          display: block;
-          margin-bottom: 5px;
-          font-weight: 500;
-          font-size: 13px;
-          color: #606266;
-        }
-      }
-    }
   }
 </style>
 

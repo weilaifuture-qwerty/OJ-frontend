@@ -1,12 +1,11 @@
 <template>
   <Panel shadow>
-    <template #title>{{ contest.title }}</template>
-    <template #extra>
+    <div slot="title">{{ contest.title }}</div>
+    <div slot="extra">
       <screen-full :height="18" :width="18" class="screen-full"></screen-full>
       <Poptip trigger="hover" placement="left-start">
         <Icon type="android-settings" size="20"></Icon>
-        <template #content>
-          <div id="switches">
+        <div slot="content" id="switches">
           <p>
             <span>{{$t('m.Menu')}}</span>
             <i-switch v-model="showMenu"></i-switch>
@@ -15,7 +14,7 @@
           </p>
           <p>
             <span>{{$t('m.Auto_Refresh')}}(10s)</span>
-            <i-switch :disabled="refreshDisabled" @change="handleAutoRefresh"></i-switch>
+            <i-switch :disabled="refreshDisabled" @on-change="handleAutoRefresh"></i-switch>
           </p>
           <template v-if="isContestAdmin">
             <p>
@@ -30,38 +29,34 @@
           <template>
             <Button type="primary" size="small" @click="downloadRankCSV">{{$t('m.download_csv')}}</Button>
           </template>
-          </div>
-        </template>
+        </div>
       </Poptip>
-    </template>
+    </div>
     <div v-show="showChart" class="echarts">
       <ECharts :options="options" ref="chart" auto-resize></ECharts>
     </div>
     <Table ref="tableRank" :columns="columns" :data="dataRank" disabled-hover height="600"></Table>
     <Pagination :total="total"
-                v-model:page-size="limit"
-                v-model:current="page"
-                @change="getContestRankData"
-                @page-size-change="getContestRankData(1)"
+                :page-size.sync="limit"
+                :current.sync="page"
+                @on-change="getContestRankData"
+                @on-page-size-change="getContestRankData(1)"
                 show-sizer></Pagination>
   </Panel>
 </template>
 <script>
-  import dayjs from 'dayjs'
-  import { useContestStore } from '@/stores/contest'
-  import Panel from '@/pages/oj/components/Panel.vue'
+  import moment from 'moment'
+  import { mapActions } from 'vuex'
+
   import Pagination from '@oj/components/Pagination'
-  import ContestRankMixin from './contestRankMixinVue3'
+  import ContestRankMixin from './contestRankMixin'
   import time from '@/utils/time'
   import utils from '@/utils/utils'
-  import ECharts from 'vue-echarts'
 
   export default {
     name: 'acm-contest-rank',
     components: {
-      Panel,
-      Pagination,
-      ECharts
+      Pagination
     },
     mixins: [ContestRankMixin],
     data () {
@@ -89,12 +84,14 @@
                   display: 'inline-block',
                   'max-width': '150px'
                 },
-                onClick: () => {
-                  this.$router.push(
-                    {
-                      name: 'user-home',
-                      query: {username: params.row.user.username}
-                    })
+                on: {
+                  click: () => {
+                    this.$router.push(
+                      {
+                        name: 'user-home',
+                        query: {username: params.row.user.username}
+                      })
+                  }
                 }
               }, params.row.user.username)
             }
@@ -106,8 +103,16 @@
             render: (h, params) => {
               return h('span', {}, [
                 h('span', {}, params.row.accepted_number + ' / '),
-                // Hidden link to submission list
-                h('span', {}, params.row.submission_number)
+                h('a', {
+                  on: {
+                    click: () => {
+                      this.$router.push({
+                        name: 'contest-submission-list',
+                        query: {username: params.row.user.username}
+                      })
+                    }
+                  }
+                }, params.row.submission_number)
               ])
             }
           },
@@ -187,10 +192,9 @@
       this.contestID = this.$route.params.contestID
       this.getContestRankData(1)
       if (this.contestProblems.length === 0) {
-        const contestStore = useContestStore()
-        contestStore.getContestProblems(this.$route.params.contestID).then(() => {
-          this.addTableColumns(contestStore.contestProblems)
-          this.addChartCategory(contestStore.contestProblems)
+        this.getContestProblems().then((res) => {
+          this.addTableColumns(res.data.data)
+          this.addChartCategory(res.data.data)
         })
       } else {
         this.addTableColumns(this.contestProblems)
@@ -198,6 +202,7 @@
       }
     },
     methods: {
+      ...mapActions(['getContestProblems']),
       addChartCategory (contestProblems) {
         let category = []
         for (let i = 0; i <= contestProblems.length; ++i) {
@@ -225,7 +230,7 @@
           data.push([this.contest.start_time, 0])
           // index here can be regarded as stacked accepted number count.
           for (let [index, value] of timeData.entries()) {
-            let realTime = dayjs(this.contest.start_time).add(value, 'seconds').format()
+            let realTime = moment(this.contest.start_time).add(value, 'seconds').format()
             data.push([realTime, index + 1])
           }
           seriesData.push({
@@ -273,14 +278,16 @@
                 'class': {
                   'emphasis': true
                 },
-                onClick: () => {
-                  this.$router.push({
-                    name: 'contest-problem-details',
-                    params: {
-                      contestID: this.contestID,
-                      problemID: problem._id
-                    }
-                  })
+                on: {
+                  click: () => {
+                    this.$router.push({
+                      name: 'contest-problem-details',
+                      params: {
+                        contestID: this.contestID,
+                        problemID: problem._id
+                      }
+                    })
+                  }
                 }
               }, problem._id)
             },
@@ -301,10 +308,8 @@
         })
       },
       parseTotalTime (totalTime) {
-        const hours = Math.floor(totalTime / 3600)
-        const minutes = Math.floor((totalTime % 3600) / 60)
-        const seconds = totalTime % 60
-        return [hours, minutes, seconds].join(':')
+        let m = moment.duration(totalTime, 's')
+        return [Math.floor(m.asHours()), m.minutes(), m.seconds()].join(':')
       },
       downloadRankCSV () {
         utils.downloadFile(`contest_rank?download_csv=1&contest_id=${this.$route.params.contestID}&force_refrash=${this.forceUpdate ? '1' : '0'}`)

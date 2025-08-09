@@ -123,24 +123,16 @@ export default {
       return userStore.isAuthenticated
     },
     checkedInToday() {
-      if (!this.userStreak.last_check_in) {
+      if (!this.userStreak.check_in_days || this.userStreak.check_in_days.length === 0) {
         return false
       }
       
-      // Simple solution: Check if last check-in was within 24 hours
-      // This handles timezone differences between frontend and backend
-      const lastCheckIn = dayjs(this.userStreak.last_check_in)
-      const now = dayjs()
-      const hoursSinceCheckIn = now.diff(lastCheckIn, 'hour')
-      
-      console.log('[DEBUG] checkedInToday:', {
-        'last_check_in': this.userStreak.last_check_in,
-        'now': now.format(),
-        'hoursSinceCheckIn': hoursSinceCheckIn,
-        'within24Hours': hoursSinceCheckIn < 24
+      // Check if today's date exists in check_in_days array
+      const today = dayjs().format('YYYY-MM-DD')
+      return this.userStreak.check_in_days.some(date => {
+        const checkDate = dayjs(date).format('YYYY-MM-DD')
+        return checkDate === today
       })
-      
-      return hoursSinceCheckIn < 24
     },
     currentMonthYear() {
       return dayjs().format('MMMM YYYY')
@@ -200,17 +192,8 @@ export default {
         // Format both dates to YYYY-MM-DD for consistent comparison
         const currentDateStr = current.format('YYYY-MM-DD')
         const isChecked = this.userStreak.check_in_days.some(date => {
-          // Simple comparison since dates are already processed
-          const matches = date === currentDateStr
-          
-          if (matches) {
-            console.log('[DEBUG] Calendar match found:', {
-              'calendar date': currentDateStr,
-              'check-in date': date
-            })
-          }
-          
-          return matches
+          // Simple string comparison - backend returns dates in user's timezone
+          return date === currentDateStr
         })
         
         days.push({
@@ -273,25 +256,9 @@ export default {
           const streakData = res.data.data
           console.log('[DEBUG] Raw streak data from API:', streakData)
           
-          const processedCheckInDays = (streakData.check_in_days || []).map(date => {
-            const original = date
-            let processed = date
-            
-            // If backend returns date-only strings and user is in negative timezone (behind UTC)
-            // we need to subtract one day since backend stored tomorrow's UTC date
-            if (date.match(/^\d{4}-\d{2}-\d{2}$/) && new Date().getTimezoneOffset() > 0) {
-              processed = dayjs(date).subtract(1, 'day').format('YYYY-MM-DD')
-              console.log('[DEBUG] Adjusting date for timezone:', {
-                'original': original,
-                'adjusted': processed,
-                'timezone offset': new Date().getTimezoneOffset()
-              })
-            } else {
-              processed = this.toLocalDateString(date)
-            }
-            
-            return processed
-          })
+          // Backend now handles timezone correctly, so just use the dates as-is
+          const processedCheckInDays = (streakData.check_in_days || [])
+          console.log('[DEBUG] Check-in days from backend:', processedCheckInDays)
           
           this.userStreak = {
             ...streakData,
@@ -342,9 +309,21 @@ export default {
         console.log('[DEBUG] Check-in API response:', res)
         
         if (res.data && res.data.data) {
-          console.log('[DEBUG] Streak data received:', res.data.data)
-          this.userStreak = res.data.data
-          this.$Message.success(this.$t('m.Check_In_Success'))
+          console.log('[DEBUG] Check-in response:', res.data.data)
+          
+          // Update streak data from check-in response
+          const checkInData = res.data.data
+          this.userStreak.current_streak = checkInData.current_streak
+          this.userStreak.best_streak = checkInData.best_streak || this.userStreak.best_streak
+          
+          // Add today to check_in_days
+          const today = dayjs().format('YYYY-MM-DD')
+          if (!this.userStreak.check_in_days.includes(today)) {
+            this.userStreak.check_in_days.push(today)
+          }
+          this.userStreak.last_check_in = dayjs().format()
+          
+          this.$Message.success(checkInData.message || this.$t('m.Check_In_Success'))
           
           // Show streak animation if streak is continuing
           if (this.userStreak.current_streak > 1) {
@@ -354,6 +333,15 @@ export default {
           throw new Error('Check-in failed - no data in response')
         }
       } catch (error) {
+        console.error('[DEBUG] Check-in error:', error)
+        
+        // Check if user has already checked in today before proceeding
+        const today = dayjs().format('YYYY-MM-DD')
+        if (this.userStreak.check_in_days.includes(today)) {
+          this.$Message.warning(this.$t('m.Already_Checked_In_Today'))
+          return
+        }
+        
         // Mock implementation since backend doesn't have this endpoint yet
         // Check if continuing streak or starting new one
         const lastCheckIn = this.userStreak.last_check_in ? 
@@ -380,20 +368,20 @@ export default {
         })
         
         // Add today to check_in_days if not already there
-        const today = checkInDate.format('YYYY-MM-DD')
+        const todayDateStr = checkInDate.format('YYYY-MM-DD')
         const todayExists = this.userStreak.check_in_days.some(date => {
           const isSame = dayjs(date).startOf('day').isSame(checkInDate, 'day')
           console.log('[DEBUG] Comparing dates:', {
             'existing date': date,
-            'today': today,
+            'today': todayDateStr,
             'isSame': isSame
           })
           return isSame
         })
         
         if (!todayExists) {
-          console.log('[DEBUG] Adding today to check_in_days:', today)
-          this.userStreak.check_in_days.push(today)
+          console.log('[DEBUG] Adding today to check_in_days:', todayDateStr)
+          this.userStreak.check_in_days.push(todayDateStr)
         } else {
           console.log('[DEBUG] Today already exists in check_in_days')
         }

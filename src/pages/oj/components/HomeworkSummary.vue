@@ -94,6 +94,7 @@ export default {
       try {
         // Get all homework to filter client-side
         const res = await api.getStudentHomework({
+          page: 1,
           limit: 100 // Get all homework
         })
         

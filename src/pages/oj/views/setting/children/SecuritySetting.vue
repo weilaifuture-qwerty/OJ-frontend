@@ -64,8 +64,7 @@
 
 <script>
   import api from '@oj/api'
-  import { computed } from 'vue'
-  import { useUserStore } from '@/stores/user'
+  import {mapGetters, mapActions} from 'vuex'
   import browserDetector from 'browser-detect'
 
   const browsers = {}
@@ -81,15 +80,6 @@
   }
 
   export default {
-    setup() {
-      const userStore = useUserStore()
-      
-      return {
-        userStore,
-        user: computed(() => userStore.user),
-        TFAOpened: computed(() => userStore.user && userStore.user.two_factor_auth)
-      }
-    },
     data () {
       return {
         qrcodeSrc: '',
@@ -108,6 +98,7 @@
       }
     },
     methods: {
+      ...mapActions(['getProfile']),
       getAuthImg () {
         this.loadingQRcode = true
         api.twoFactorAuth('get').then(res => {
@@ -156,7 +147,7 @@
         this.loadingBtn = true
         api.twoFactorAuth(method, this.formTwoFactor).then(res => {
           this.loadingBtn = false
-          this.userStore.getProfile()
+          this.getProfile()
           if (close === true) {
             this.getAuthImg()
             this.formTwoFactor.code = ''
@@ -166,10 +157,16 @@
           this.formTwoFactor.code = ''
           this.loadingBtn = false
           if (err.data.data.indexOf('session') > -1) {
-            this.userStore.getProfile()
+            this.getProfile()
             this.getAuthImg()
           }
         })
+      }
+    },
+    computed: {
+      ...mapGetters(['user']),
+      TFAOpened () {
+        return this.user && this.user.two_factor_auth
       }
     },
     filters: {

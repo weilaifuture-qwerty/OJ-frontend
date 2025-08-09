@@ -14,9 +14,7 @@ import {
   ResetPassword,
   SubmissionDetails,
   SubmissionList,
-  UserHome,
-  StudentHomeworkList,
-  StudentHomeworkDetail
+  UserHome
 } from '../views'
 
 import * as Contest from '@oj/views/contest'
@@ -59,7 +57,6 @@ export default [
     meta: {title: 'Problem Details'},
     component: Problem
   },
-  /* Hidden Status/Submission Routes
   {
     name: 'submission-list',
     path: '/status',
@@ -72,7 +69,6 @@ export default [
     meta: {title: 'Submission Details'},
     component: SubmissionDetails
   },
-  */
   {
     name: 'contest-list',
     path: '/contest',
@@ -85,13 +81,11 @@ export default [
     component: Contest.ContestDetails,
     meta: {title: 'Contest Details'},
     children: [
-      /* Hidden Contest Submission List
       {
         name: 'contest-submission-list',
         path: 'submissions',
         component: SubmissionList
       },
-      */
       {
         name: 'contest-problem-list',
         path: 'problems',
@@ -105,7 +99,7 @@ export default [
       {
         name: 'contest-announcement-list',
         path: 'announcements',
-        component: Contest.ContestAnnouncements
+        component: Announcements
       },
       {
         name: 'contest-rank',
@@ -179,39 +173,8 @@ export default [
     meta: {title: 'FAQ'},
     component: FAQ
   },
-  // Homework System Routes
   {
-    path: '/homework',
-    name: 'student-homework-list',
-    meta: {requiresAuth: true, title: 'Homework'},
-    component: StudentHomeworkList
-  },
-  {
-    path: '/homework/admin',
-    name: 'admin-homework-list',
-    meta: {requiresAuth: true, requiresAdmin: true, title: 'Homework Management'},
-    component: () => import('@oj/views/homework/AdminHomeworkList.vue')
-  },
-  {
-    path: '/homework/:id',
-    name: 'student-homework-detail',
-    meta: {requiresAuth: true, title: 'Homework Detail'},
-    component: StudentHomeworkDetail
-  },
-  {
-    path: '/homework/:homeworkId/problem/:problemId',
-    name: 'homework-problem-details',
-    meta: {requiresAuth: true, title: 'Homework Problem'},
-    component: Problem
-  },
-  {
-    path: '/csrf-debug',
-    name: 'csrf-debug',
-    meta: {title: 'CSRF Debug'},
-    component: () => import('../views/CSRFDebug.vue')
-  },
-  {
-    path: '/:pathMatch(.*)*',
+    path: '*',
     meta: {title: '404'},
     component: NotFound
   }

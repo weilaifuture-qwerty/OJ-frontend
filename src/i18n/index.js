@@ -1,46 +1,40 @@
 import { createI18n } from 'vue-i18n'
-
-// Import OJ and Admin messages
-import { m as ojEnUS } from './oj/en-US.js'
-import { m as ojZhCN } from './oj/zh-CN.js'
-import { m as ojZhTW } from './oj/zh-TW.js'
-import { m as adminEnUS } from './admin/en-US.js'
-import { m as adminZhCN } from './admin/zh-CN.js'
-import { m as adminZhTW } from './admin/zh-TW.js'
-
-// Import ViewUI Plus locale
-import enUSLocale from 'view-ui-plus/dist/locale/en-US'
-import zhCNLocale from 'view-ui-plus/dist/locale/zh-CN'
-import zhTWLocale from 'view-ui-plus/dist/locale/zh-TW'
-
-const languages = [
-  {value: 'en-US', label: 'English'},
-  {value: 'zh-CN', label: '简体中文'},
-  {value: 'zh-TW', label: '繁體中文'}
-]
+import en from 'element-plus/dist/locale/en.mjs'
+import zhCN from 'element-plus/dist/locale/zh-cn.mjs'
+import zhTW from 'element-plus/dist/locale/zh-tw.mjs'
 
 const messages = {
-  'en-US': { 
-    m: { ...ojEnUS, ...adminEnUS },
-    ...enUSLocale
+  'en-US': {
+    ...en,
+    m: {
+      Welcome_to_OnlineJudge: 'Welcome to OnlineJudge',
+      Welcome_to_use: 'Welcome to use OnlineJudge',
+      // Add more keys as needed from the original repo
+    }
   },
-  'zh-CN': { 
-    m: { ...ojZhCN, ...adminZhCN },
-    ...zhCNLocale
+  'zh-CN': {
+    ...zhCN,
+    m: {
+      Welcome_to_OnlineJudge: '欢迎来到 OnlineJudge',
+      Welcome_to_use: '欢迎使用 OnlineJudge',
+      // Add more keys as needed from the original repo
+    }
   },
-  'zh-TW': { 
-    m: { ...ojZhTW, ...adminZhTW },
-    ...zhTWLocale
+  'zh-TW': {
+    ...zhTW,
+    m: {
+      Welcome_to_OnlineJudge: '歡迎來到 OnlineJudge',
+      Welcome_to_use: '歡迎使用 OnlineJudge',
+      // Add more keys as needed from the original repo
+    }
   }
 }
 
-// Create i18n instance
 const i18n = createI18n({
-  legacy: true, // Use legacy mode for now to support Vue 2 style components
+  legacy: false,
   locale: 'en-US',
   fallbackLocale: 'en-US',
-  messages: messages
+  messages
 })
 
 export default i18n
-export { languages }

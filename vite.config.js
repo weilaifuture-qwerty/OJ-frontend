@@ -1,132 +1,56 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
-import { createHtmlPlugin } from 'vite-plugin-html'
-import Components from 'unplugin-vue-components/vite'
-import AutoImport from 'unplugin-auto-import/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import compression from 'vite-plugin-compression'
+import { resolve } from 'path'
 
-// Custom plugin to handle root route
-const handleRootRoute = () => {
-  return {
-    name: 'handle-root-route',
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        if (req.url === '/' || req.url === '/index.html') {
-          req.url = '/src/pages/oj/index.html'
-        }
-        next()
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd())
+  const commonProxy = {
+    target: env.TARGET || 'http://localhost:8000',
+    changeOrigin: true,
+    configure: (proxy, options) => {
+      proxy.on('proxyReq', (proxyReq, req, res) => {
+        proxyReq.setHeader('Referer', env.TARGET)
       })
     }
   }
-}
 
-export default defineConfig({
-  root: process.cwd(),
-  publicDir: 'public',
-  plugins: [
-    handleRootRoute(),
-    vue(),
-    AutoImport({
-      imports: ['vue', 'vue-router', 'pinia'],
-      resolvers: [ElementPlusResolver({
-        importStyle: false
-      })],
-      dts: false
-    }),
-    Components({
-      resolvers: [ElementPlusResolver({
-        importStyle: false
-      })],
-      dts: false,
-      include: [/\.vue$/, /\.vue\?vue/],
-      exclude: [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/, /[\\/]src[\\/]pages[\\/]admin[\\/].*\.vue$/]
-    }),
-    createHtmlPlugin({
-      minify: true,
-      pages: [
-        {
-          entry: '/src/pages/oj/index.js',
-          filename: 'index.html',
-          template: 'src/pages/oj/index.html',
-          injectOptions: {
-            data: {
-              title: 'Online Judge'
-            }
-          }
-        },
-        {
-          entry: '/src/pages/admin/index.js',
-          filename: 'admin/index.html',
-          template: 'src/pages/admin/index.html',
-          injectOptions: {
-            data: {
-              title: 'OJ Admin'
-            }
-          }
-        }
-      ]
-    }),
-    compression({
-      verbose: true,
-      disable: false,
-      threshold: 10240,
-      algorithm: 'gzip',
-      ext: '.gz'
-    })
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@oj': path.resolve(__dirname, './src/pages/oj'),
-      '@admin': path.resolve(__dirname, './src/pages/admin'),
-      '~': path.resolve(__dirname, './src')
-    },
-    extensions: ['.js', '.vue', '.json']
-  },
-  server: {
-    port: 8080,
-    host: true,
-    open: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false
+  return {
+    plugins: [vue()],
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src'),
+        '@oj': resolve(__dirname, 'src/pages/oj'),
+        '@admin': resolve(__dirname, 'src/pages/admin'),
+        '@components': resolve(__dirname, 'src/components')
       }
-    }
-  },
-  preview: {
-    port: 8080,
-    host: true
-  },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'static',
-    sourcemap: false,
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'src/pages/oj/index.html'),
-        admin: path.resolve(__dirname, 'src/pages/admin/index.html')
-      },
-      output: {
-        manualChunks: {
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'ui-vendor': ['element-plus', 'view-ui-plus'],
-          'utils': ['axios', 'dayjs', 'nprogress'],
-          'editor': ['codemirror', 'katex', 'highlight.js']
+    },
+    css: {
+      preprocessorOptions: {
+        less: {
+          javascriptEnabled: true,
+          additionalData: `@import "@/styles/theme.less";`
         }
       }
     },
-    chunkSizeWarningLimit: 1000
-  },
-  css: {
-    preprocessorOptions: {
-      less: {
-        javascriptEnabled: true,
-        additionalData: '@import "@/styles/common.less";'
+    server: {
+      port: env.PORT || 8080,
+      open: true,
+      proxy: {
+        '/api': commonProxy,
+        '/public': commonProxy
+      }
+    },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'static',
+      sourcemap: env.USE_SENTRY === '1',
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+          admin: resolve(__dirname, 'src/pages/admin/index.html')
+        }
       }
     }
   }
-})
+}) 

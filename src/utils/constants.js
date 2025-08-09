@@ -67,13 +67,21 @@ export const JUDGE_STATUS = {
     name: 'Submitting',
     color: 'yellow',
     type: 'warning'
-  }
+  },
+  PENDING: 'Pending',
+  JUDGING: 'Judging',
+  ACCEPTED: 'Accepted',
+  WRONG_ANSWER: 'Wrong Answer',
+  TIME_LIMIT_EXCEEDED: 'Time Limit Exceeded',
+  MEMORY_LIMIT_EXCEEDED: 'Memory Limit Exceeded',
+  RUNTIME_ERROR: 'Runtime Error',
+  COMPILATION_ERROR: 'Compilation Error'
 }
 
 export const CONTEST_STATUS = {
-  'NOT_START': '1',
-  'UNDERWAY': '0',
-  'ENDED': '-1'
+  NOT_START: 'NOT_START',
+  UNDERWAY: 'UNDERWAY',
+  ENDED: 'ENDED'
 }
 
 export const CONTEST_STATUS_REVERSE = {
@@ -98,7 +106,8 @@ export const RULE_TYPE = {
 
 export const CONTEST_TYPE = {
   PUBLIC: 'Public',
-  PRIVATE: 'Password Protected'
+  PRIVATE: 'Private',
+  PASSWORD_PROTECTED: 'Password Protected'
 }
 
 export const USER_TYPE = {
@@ -127,3 +136,9 @@ export function buildProblemCodeKey (problemID, contestID = null) {
 }
 
 export const GOOGLE_ANALYTICS_ID = 'UA-111499601-1'
+
+export const PROBLEM_DIFFICULTY = {
+  EASY: 'Easy',
+  MEDIUM: 'Medium',
+  HARD: 'Hard'
+}

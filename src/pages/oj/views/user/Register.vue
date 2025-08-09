@@ -1,210 +1,115 @@
 <template>
-<div>
-    <Form ref="formRegister" :model="formRegister" :rules="ruleRegister">
-      <FormItem prop="username">
-        <Input type="text" v-model="formRegister.username" :placeholder="$t('m.RegisterUsername')" size="large" @keyup.enter="handleRegister">
-          <template #prefix>
-            <Icon type="md-person" />
-          </template>
-        </Input>
-      </FormItem>
-      <FormItem prop="email">
-        <Input v-model="formRegister.email" :placeholder="$t('m.Email_Address')" size="large" @keyup.enter="handleRegister">
-          <template #prefix>
-            <Icon type="md-mail" />
-          </template>
-        </Input>
-      </FormItem>
-      <FormItem prop="password">
-        <Input type="password" v-model="formRegister.password" :placeholder="$t('m.RegisterPassword')" size="large" @keyup.enter="handleRegister">
-          <template #prefix>
-            <Icon type="md-lock" />
-          </template>
-        </Input>
-      </FormItem>
-      <FormItem prop="passwordAgain">
-        <Input type="password" v-model="formRegister.passwordAgain" :placeholder="$t('m.Password_Again')" size="large" @keyup.enter="handleRegister">
-          <template #prefix>
-            <Icon type="md-lock" />
-          </template>
-        </Input>
-      </FormItem>
-      <FormItem prop="captcha" style="margin-bottom:10px">
-        <div class="oj-captcha">
-          <div class="oj-captcha-code">
-            <Input v-model="formRegister.captcha" :placeholder="$t('m.Captcha')" size="large" @keyup.enter="handleRegister">
-              <template #prefix>
-                <Icon type="md-bulb" />
-              </template>
-            </Input>
-          </div>
-          <div class="oj-captcha-img">
-            <Tooltip content="Click to refresh" placement="top">
-              <img :src="captchaSrc" @click="getCaptchaSrc"/>
-            </Tooltip>
-          </div>
-        </div>
-      </FormItem>
-    </Form>
-    <div class="footer">
-      <Button
-        type="primary"
-        @click="handleRegister"
-        class="btn" long
-        :loading="btnRegisterLoading">
-        {{$t('m.UserRegister')}}
-      </Button>
-      <Button
-        type="ghost"
-        @click="switchMode('login')"
-        class="btn" long>
-        {{$t('m.Already_Registed')}}
-      </Button>
-    </div>
+  <div class="register-container">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="80px"
+      @submit.prevent="handleSubmit"
+    >
+      <el-form-item label="Username" prop="username">
+        <el-input v-model="form.username" placeholder="Username" />
+      </el-form-item>
+      <el-form-item label="Password" prop="password">
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="Password"
+          show-password
+        />
+      </el-form-item>
+      <el-form-item label="Email" prop="email">
+        <el-input v-model="form.email" placeholder="Email" />
+      </el-form-item>
+      <el-form-item>
+        <vue3-recaptcha
+          ref="recaptchaRef"
+          :sitekey="recaptchaSiteKey"
+          @verify="onCaptchaVerified"
+          @expire="onCaptchaExpired"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" native-type="submit" :loading="loading">
+          Register
+        </el-button>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
-<script>
-  import { useUserStore } from '@/stores/user'
-  import { useWebsiteStore } from '@/stores/website'
-  import api from '@oj/api'
-  import { Message } from 'view-ui-plus'
+<script setup>
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Vue3Recaptcha } from 'vue3-recaptcha2'
+import { useUserStore } from '@/stores/user'
 
-  export default {
-    name: 'Register',
-    setup() {
-      const userStore = useUserStore()
-      const websiteStore = useWebsiteStore()
-      
-      return {
-        userStore,
-        websiteStore
-      }
-    },
-    mounted () {
-      this.getCaptchaSrc()
-    },
-    data () {
-      const CheckUsernameNotExist = (rule, value, callback) => {
-        api.checkUsernameOrEmail(value, undefined).then(res => {
-          if (res.data.data.username === true) {
-            callback(new Error(this.$i18n.t('m.The_username_already_exists')))
-          } else {
-            callback()
-          }
-        }, _ => callback())
-      }
-      const CheckEmailNotExist = (rule, value, callback) => {
-        api.checkUsernameOrEmail(undefined, value).then(res => {
-          if (res.data.data.email === true) {
-            callback(new Error(this.$i18n.t('m.The_email_already_exists')))
-          } else {
-            callback()
-          }
-        }, _ => callback())
-      }
-      const CheckPassword = (rule, value, callback) => {
-        if (this.formRegister.password !== '') {
-          // 对第二个密码框再次验证
-          this.$refs.formRegister.validateField('passwordAgain')
-        }
-        callback()
-      }
+const router = useRouter()
+const userStore = useUserStore()
 
-      const CheckAgainPassword = (rule, value, callback) => {
-        if (value !== this.formRegister.password) {
-          callback(new Error(this.$i18n.t('m.password_does_not_match')))
-        }
-        callback()
-      }
+const formRef = ref(null)
+const recaptchaRef = ref(null)
+const loading = ref(false)
+const recaptchaSiteKey = 'YOUR_RECAPTCHA_SITE_KEY'
 
-      return {
-        btnRegisterLoading: false,
-        captchaSrc: '',
-        formRegister: {
-          username: '',
-          password: '',
-          passwordAgain: '',
-          email: '',
-          captcha: ''
-        },
-        ruleRegister: {
-          username: [
-            {required: true, trigger: 'blur'},
-            {validator: CheckUsernameNotExist, trigger: 'blur'}
-          ],
-          email: [
-            {required: true, type: 'email', trigger: 'blur'},
-            {validator: CheckEmailNotExist, trigger: 'blur'}
-          ],
-          password: [
-            {required: true, trigger: 'blur', min: 6, max: 20},
-            {validator: CheckPassword, trigger: 'blur'}
-          ],
-          passwordAgain: [
-            {required: true, validator: CheckAgainPassword, trigger: 'change'}
-          ],
-          captcha: [
-            {required: true, trigger: 'blur', min: 1, max: 10}
-          ]
-        }
-      }
-    },
-    methods: {
-      getCaptchaSrc() {
-        api.getCaptcha().then(res => {
-          this.captchaSrc = res.data
-        })
-      },
-      switchMode (mode) {
-        this.userStore.changeModalStatus({
-          mode,
-          visible: true
-        })
-      },
-      handleRegister () {
-        this.$refs.formRegister.validate(async (valid) => {
-          if (!valid) {
-            return
-          }
-          let formData = Object.assign({}, this.formRegister)
-          delete formData['passwordAgain']
-          this.btnRegisterLoading = true
-          try {
-            await api.register(formData)
-            Message.success(this.$i18n.t('m.Thanks_for_registering'))
-            this.switchMode('login')
-          } catch (error) {
-            this.getCaptchaSrc()
-            this.formRegister.captcha = ''
-          } finally {
-            this.btnRegisterLoading = false
-          }
-        })
-      }
-    },
-    computed: {
-      website() {
-        return this.websiteStore.website
-      },
-      modalStatus() {
-        return this.userStore.modalStatus
-      }
-    }
+const form = reactive({
+  username: '',
+  password: '',
+  email: '',
+  recaptcha: ''
+})
+
+const rules = {
+  username: [
+    { required: true, message: 'Please input username', trigger: 'blur' },
+    { min: 3, max: 20, message: 'Length should be 3 to 20', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: 'Please input password', trigger: 'blur' },
+    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: 'Please input email', trigger: 'blur' },
+    { type: 'email', message: 'Please input valid email', trigger: 'blur' }
+  ]
+}
+
+const onCaptchaVerified = (response) => {
+  form.recaptcha = response
+}
+
+const onCaptchaExpired = () => {
+  form.recaptcha = ''
+  recaptchaRef.value?.reset()
+}
+
+const handleSubmit = async () => {
+  if (!form.recaptcha) {
+    ElMessage.error('Please complete the captcha')
+    return
   }
+
+  try {
+    loading.value = true
+    await formRef.value.validate()
+    await userStore.register(form)
+    ElMessage.success('Registration successful')
+    router.push('/login')
+  } catch (error) {
+    ElMessage.error(error.message || 'Registration failed')
+    recaptchaRef.value?.reset()
+    form.recaptcha = ''
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
-<style scoped lang="less">
-  .footer {
-    overflow: auto;
-    margin-top: 20px;
-    margin-bottom: -15px;
-    text-align: left;
-    .btn {
-      margin: 0 0 15px 0;
-      &:last-child {
-        margin: 0;
-      }
-    }
-  }
+<style scoped>
+.register-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
 </style>

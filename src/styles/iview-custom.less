@@ -6,8 +6,6 @@ table {
     table-layout: auto !important;
   }
 }
-
-// ViewUI Plus specific styles - uses ivu- prefix
 .ivu-table-wrapper {
   border: none;
 }
@@ -20,18 +18,8 @@ table {
   border-bottom-width: 0;
 }
 
-// Additional ViewUI Plus specific styles
-.ivu-btn {
-  font-size: 14px;
-}
-
-.ivu-table {
-  font-size: 14px;
-}
-
-.ivu-card {
-  background: #fff;
-  border-radius: 4px;
+.ivu-table td {
+  border-bottom-color: #dddddd;
 }
 
 .ivu-table .first-ac {
@@ -40,7 +28,7 @@ table {
 }
 
 .ivu-table .ac {
-  background-color: #dff0d8;
+  background-color: #dff0d8;;
   color: #3c763d;
 }
 
@@ -53,58 +41,6 @@ table {
   border-top-width: 0;
   padding: 0 18px 20px 18px;
 }
-
 .ivu-modal-body {
   padding: 18px;
-}
-
-// Fix for ViewUI Plus Panel styling
-.ivu-card .panel-title {
-  font-size: 18px;
-  font-weight: 500;
-}
-
-// Fix for ViewUI Plus Button styling in table
-.ivu-table .ivu-btn-text {
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: #2d8cf0;
-  &:hover {
-    color: #57a3f3;
-  }
-}
-
-// Menu specific fixes
-.ivu-menu {
-  &-horizontal {
-    height: 60px;
-    line-height: 60px;
-  }
-  
-  &-item {
-    padding: 0 20px;
-    position: relative;
-    cursor: pointer;
-    transition: all .2s ease-in-out;
-    
-    &:hover {
-      color: #2d8cf0;
-      border-bottom: 2px solid #2d8cf0;
-    }
-  }
-}
-
-// Fix filter styling
-.filter {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: inline-block;
-  
-  li {
-    display: inline-block;
-    padding: 0 10px;
-    vertical-align: middle;
-  }
 }

@@ -25,7 +25,7 @@
         align="center"
         width="100"
         fixed="right">
-        <template #default="{row}">
+        <template slot-scope="{row}">
           <icon-btn icon="plus" name="Add the problem"
                     @click.native="handleAddProblem(row.id)"></icon-btn>
         </template>

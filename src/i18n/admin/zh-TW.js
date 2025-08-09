@@ -1,12 +1,8 @@
 export const m = {
-  // Common
-  Search: '搜尋',
-  Create: '建立',
   // SideMenu.vue
   Dashboard: '儀表板',
   General: '基本設定',
   User: '使用者管理',
-  Students: '學生管理',
   Announcement: '公告管理',
   System_Config: '系統設定',
   Judge_Server: 'Judge 伺服器',
@@ -23,7 +19,6 @@ export const m = {
   Create_Contest: '建立比賽',
   // User.vue
   User_User: '使用者',
-  Create_User: '創建使用者',
   Import_User: '匯入使用者',
   Generate_User: '生成使用者',
   // User.vue-dialog
@@ -94,18 +89,6 @@ export const m = {
   Score: '分數',
   Hint: '提示',
   Source: '來源',
-  Tag: '標籤',
-  New_Tag: '新增標籤',
-  // AI Tag Suggestions
-  AI_Suggest_Tags: 'AI 推薦標籤',
-  AI_Suggested_Tags: 'AI 推薦的標籤',
-  Analyzing_problem_content: '正在分析題目內容...',
-  confidence: '置信度',
-  Add: '添加',
-  Added: '已添加',
-  Add_All_Suggestions: '添加所有推薦',
-  No_tag_suggestions_available: '暫無標籤推薦',
-  Try_adding_more_problem_details: '請添加更多題目詳情',
   // Contest.vue
   ContestTitle: '標題',
   ContestDescription: '描述',

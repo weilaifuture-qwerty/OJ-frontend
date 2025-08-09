@@ -1,31 +1,28 @@
 <template>
-  <div class="problem-list-container">
-    <div class="problem-list-main">
+  <Row type="flex" :gutter="18">
+    <Col :span=19>
     <Panel shadow>
-      <template #title>{{$t('m.Problem_List')}}</template>
-      <template #extra>
+      <div slot="title">{{$t('m.Problem_List')}}</div>
+      <div slot="extra">
         <ul class="filter">
           <li>
-            <Dropdown @on-click="filterByDifficulty" transfer>
-              <a href="javascript:void(0)">
-                {{query.difficulty === '' ? this.$i18n.t('m.Difficulty') : this.$i18n.t('m.' + query.difficulty)}}
-                <Icon type="ios-arrow-down"></Icon>
-              </a>
-              <template #list>
-                <DropdownMenu>
-                  <DropdownItem name="">{{$t('m.All')}}</DropdownItem>
-                  <DropdownItem name="Low">{{$t('m.Low')}}</DropdownItem>
-                  <DropdownItem name="Mid" >{{$t('m.Mid')}}</DropdownItem>
-                  <DropdownItem name="High">{{$t('m.High')}}</DropdownItem>
-                </DropdownMenu>
-              </template>
+            <Dropdown @on-click="filterByDifficulty">
+              <span>{{query.difficulty === '' ? this.$i18n.t('m.Difficulty') : this.$i18n.t('m.' + query.difficulty)}}
+                <Icon type="arrow-down-b"></Icon>
+              </span>
+              <Dropdown-menu slot="list">
+                <Dropdown-item name="">{{$t('m.All')}}</Dropdown-item>
+                <Dropdown-item name="Low">{{$t('m.Low')}}</Dropdown-item>
+                <Dropdown-item name="Mid" >{{$t('m.Mid')}}</Dropdown-item>
+                <Dropdown-item name="High">{{$t('m.High')}}</Dropdown-item>
+              </Dropdown-menu>
             </Dropdown>
           </li>
           <li>
-            <Switch size="large" @on-change="handleTagsVisible">
-              <template #open>{{$t('m.Tags')}}</template>
-              <template #close>{{$t('m.Tags')}}</template>
-            </Switch>
+            <i-switch size="large" @on-change="handleTagsVisible">
+              <span slot="open">{{$t('m.Tags')}}</span>
+              <span slot="close">{{$t('m.Tags')}}</span>
+            </i-switch>
           </li>
           <li>
             <Input v-model="query.keyword"
@@ -41,27 +38,25 @@
             </Button>
           </li>
         </ul>
-      </template>
+      </div>
       <Table style="width: 100%; font-size: 16px;"
              :columns="problemTableColumns"
              :data="problemList"
              :loading="loadings.table"
              disabled-hover></Table>
     </Panel>
-    <pagination
-      :total="total" v-model:page-size="query.limit" @on-change="pushRouter" @on-page-size-change="pushRouter" v-model:current="query.page" :show-sizer="true"></pagination>
+    <Pagination
+      :total="total" :page-size.sync="query.limit" @on-change="pushRouter" @on-page-size-change="pushRouter" :current.sync="query.page" :show-sizer="true"></Pagination>
 
-    </div>
+    </Col>
 
-    <div class="problem-list-sidebar">
+    <Col :span="5">
     <Panel :padding="10">
-      <template #title>
-        <div class="taglist-title">{{$t('m.Tags')}}</div>
-      </template>
+      <div slot="title" class="taglist-title">{{$t('m.Tags')}}</div>
       <Button v-for="tag in tagList"
               :key="tag.name"
               @click="filterByTag(tag.name)"
-              type="default"
+              type="ghost"
               :disabled="query.tag === tag.name"
               shape="circle"
               class="tag-btn">{{tag.name}}
@@ -73,288 +68,236 @@
       </Button>
     </Panel>
     <Spin v-if="loadings.tag" fix size="large"></Spin>
-    </div>
-  </div>
+    </Col>
+  </Row>
 </template>
 
 <script>
-  import { useUserStore } from '@/stores/user'
-  import api from '@oj/api'
-  import utils from '@/utils/utils'
-  import { ProblemMixin } from '@oj/components/mixins'
-  import Pagination from '@oj/components/Pagination'
-  import Panel from '@oj/components/Panel.vue'
+import { mapState, mapActions } from 'vuex'
+import api from '@/api'
+import utils from '@/utils/utils'
+import { ProblemMixin } from '@/components/mixins/ProblemMixin'
+import Pagination from '@/components/Pagination.vue'
 
-  export default {
-    name: 'ProblemList',
-    mixins: [ProblemMixin],
-    components: {
-      Pagination,
-      Panel
-    },
-    data () {
-      return {
-        tagList: [],
-        problemTableColumns: [
-          {
-            title: '#',
-            key: '_id',
-            width: 80,
-            render: (h, params) => {
-              return h('a', {
-                style: {
-                  color: '#2d8cf0',
-                  cursor: 'pointer',
-                  textDecoration: 'none'
-                },
-                onClick: (e) => {
-                  e.preventDefault()
+export default {
+  name: 'ProblemList',
+  mixins: [ProblemMixin],
+  components: {
+    Pagination
+  },
+  data () {
+    return {
+      tagList: [],
+      problemTableColumns: [
+        {
+          title: '#',
+          key: '_id',
+          width: 80,
+          render: (h, params) => {
+            return h('Button', {
+              props: {
+                type: 'text',
+                size: 'large'
+              },
+              on: {
+                click: () => {
                   this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
                 }
-              }, params.row._id)
-            }
-          },
-          {
-            title: this.$i18n.t('m.Title'),
-            width: 400,
-            render: (h, params) => {
-              return h('a', {
-                style: {
-                  color: '#2d8cf0',
-                  cursor: 'pointer',
-                  textDecoration: 'none',
-                  display: 'block',
-                  width: '100%'
-                },
-                onClick: (e) => {
-                  e.preventDefault()
-                  this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
-                }
-              }, params.row.title)
-            }
-          },
-          {
-            title: this.$i18n.t('m.Level'),
-            render: (h, params) => {
-              let t = params.row.difficulty
-              let color = 'blue'
-              if (t === 'Low') color = 'green'
-              else if (t === 'High') color = 'yellow'
-              return h('Tag', {
-                props: {
-                  color: color
-                }
-              }, this.$i18n.t('m.' + params.row.difficulty))
-            }
-          },
-          {
-            title: this.$i18n.t('m.Total'),
-            key: 'submission_number'
-          },
-          {
-            title: this.$i18n.t('m.AC_Rate'),
-            render: (h, params) => {
-              return h('span', this.getACRate(params.row.accepted_number, params.row.submission_number))
-            }
-          }
-        ],
-        problemList: [],
-        limit: 20,
-        total: 0,
-        loadings: {
-          table: true,
-          tag: true
-        },
-        routeName: '',
-        query: {
-          keyword: '',
-          difficulty: '',
-          tag: '',
-          page: 1,
-          limit: 10
-        }
-      }
-    },
-    mounted () {
-      this.init()
-    },
-    methods: {
-      init (simulate = false) {
-        this.routeName = this.$route.name
-        let query = this.$route.query
-        this.query.difficulty = query.difficulty || ''
-        this.query.keyword = query.keyword || ''
-        this.query.tag = query.tag || ''
-        this.query.page = parseInt(query.page) || 1
-        if (this.query.page < 1) {
-          this.query.page = 1
-        }
-        this.query.limit = parseInt(query.limit) || 10
-        if (!simulate) {
-          this.getTagList()
-        }
-        this.getProblemList()
-      },
-      pushRouter () {
-        this.$router.push({
-          name: 'problem-list',
-          query: utils.filterEmptyValue(this.query)
-        })
-      },
-      getProblemList () {
-        let offset = (this.query.page - 1) * this.query.limit
-        this.loadings.table = true
-        api.getProblemList(offset, this.limit, this.query).then(res => {
-          this.loadings.table = false
-          this.total = res.data.data.total
-          this.problemList = res.data.data.results
-          if (this.isAuthenticated) {
-            this.addStatusColumn(this.problemTableColumns, res.data.data.results)
-          }
-        }, res => {
-          this.loadings.table = false
-        })
-      },
-      getTagList () {
-        api.getProblemTagList().then(res => {
-          this.tagList = res.data.data
-          this.loadings.tag = false
-        }, res => {
-          this.loadings.tag = false
-        })
-      },
-      filterByTag (tagName) {
-        this.query.tag = tagName
-        this.query.page = 1
-        this.pushRouter()
-      },
-      filterByDifficulty (difficulty) {
-        this.query.difficulty = difficulty
-        this.query.page = 1
-        this.pushRouter()
-      },
-      filterByKeyword () {
-        this.query.page = 1
-        this.pushRouter()
-      },
-      handleTagsVisible (value) {
-        if (value) {
-          this.problemTableColumns.push(
-            {
-              title: this.$i18n.t('m.Tags'),
-              align: 'center',
-              render: (h, params) => {
-                let tags = []
-                params.row.tags.forEach(tag => {
-                  tags.push(h('Tag', {}, tag))
-                })
-                return h('div', {
-                  style: {
-                    margin: '8px 0'
-                  }
-                }, tags)
+              },
+              style: {
+                padding: '2px 0'
               }
-            })
-        } else {
-          this.problemTableColumns.splice(this.problemTableColumns.length - 1, 1)
+            }, params.row._id)
+          }
+        },
+        {
+          title: this.$i18n.t('m.Title'),
+          width: 400,
+          render: (h, params) => {
+            return h('Button', {
+              props: {
+                type: 'text',
+                size: 'large'
+              },
+              on: {
+                click: () => {
+                  this.$router.push({name: 'problem-details', params: {problemID: params.row._id}})
+                }
+              },
+              style: {
+                padding: '2px 0',
+                overflowX: 'auto',
+                textAlign: 'left',
+                width: '100%'
+              }
+            }, params.row.title)
+          }
+        },
+        {
+          title: this.$i18n.t('m.Level'),
+          render: (h, params) => {
+            let t = params.row.difficulty
+            let color = 'blue'
+            if (t === 'Low') color = 'green'
+            else if (t === 'High') color = 'yellow'
+            return h('Tag', {
+              props: {
+                color: color
+              }
+            }, this.$i18n.t('m.' + params.row.difficulty))
+          }
+        },
+        {
+          title: this.$i18n.t('m.Total'),
+          key: 'submission_number'
+        },
+        {
+          title: this.$i18n.t('m.AC_Rate'),
+          render: (h, params) => {
+            return h('span', this.getACRate(params.row.accepted_number, params.row.submission_number))
+          }
         }
+      ],
+      problemList: [],
+      limit: 20,
+      total: 0,
+      loadings: {
+        table: true,
+        tag: true
       },
-      onReset () {
-        this.$router.push({name: 'problem-list'})
-      },
-      pickone () {
-        api.pickone().then(res => {
-          this.$success('Good Luck')
-          this.$router.push({name: 'problem-details', params: {problemID: res.data.data}})
-        })
+      routeName: '',
+      query: {
+        keyword: '',
+        difficulty: '',
+        tag: '',
+        page: 1,
+        limit: 10
+      }
+    }
+  },
+  mounted () {
+    this.init()
+  },
+  methods: {
+    ...mapActions({
+      fetchProblems: 'problem/fetchProblems'
+    }),
+    init (simulate = false) {
+      this.routeName = this.$route.name
+      let query = this.$route.query
+      this.query.difficulty = query.difficulty || ''
+      this.query.keyword = query.keyword || ''
+      this.query.tag = query.tag || ''
+      this.query.page = parseInt(query.page) || 1
+      if (this.query.page < 1) {
+        this.query.page = 1
+      }
+      this.query.limit = parseInt(query.limit) || 10
+      if (!simulate) {
+        this.getTagList()
+      }
+      this.fetchProblems(this.query)
+    },
+    pushRouter () {
+      this.$router.push({
+        name: 'problem-list',
+        query: utils.filterEmptyValue(this.query)
+      })
+    },
+    async getTagList () {
+      try {
+        const response = await api.getProblemTagList()
+        this.tagList = response.data.data
+      } catch (error) {
+        this.$Message.error('Failed to fetch tags')
+      } finally {
+        this.loadings.tag = false
       }
     },
-    computed: {
-      isAuthenticated() {
-        const userStore = useUserStore()
-        return userStore.isAuthenticated
+    filterByTag (tagName) {
+      this.query.tag = tagName
+      this.query.page = 1
+      this.pushRouter()
+    },
+    filterByDifficulty (difficulty) {
+      this.query.difficulty = difficulty
+      this.query.page = 1
+      this.pushRouter()
+    },
+    filterByKeyword () {
+      this.query.page = 1
+      this.pushRouter()
+    },
+    handleTagsVisible (value) {
+      if (value) {
+        this.problemTableColumns.push(
+          {
+            title: this.$i18n.t('m.Tags'),
+            align: 'center',
+            render: (h, params) => {
+              let tags = []
+              params.row.tags.forEach(tag => {
+                tags.push(h('Tag', {}, tag))
+              })
+              return h('div', {
+                style: {
+                  margin: '8px 0'
+                }
+              }, tags)
+            }
+          })
+      } else {
+        this.problemTableColumns.splice(this.problemTableColumns.length - 1, 1)
       }
     },
-    watch: {
-      '$route' (newVal, oldVal) {
-        if (newVal !== oldVal) {
-          this.init(true)
-        }
-      },
-      'isAuthenticated' (newVal) {
-        if (newVal === true) {
-          this.init()
-        }
+    onReset () {
+      this.$router.push({name: 'problem-list'})
+    },
+    async pickone () {
+      try {
+        const response = await api.pickone()
+        this.$Message.success('Good Luck')
+        this.$router.push({name: 'problem-details', params: {problemID: response.data.data}})
+      } catch (error) {
+        this.$Message.error('Failed to pick a problem')
+      }
+    }
+  },
+  computed: {
+    ...mapState({
+      problems: state => state.problem.problems,
+      total: state => state.problem.total,
+      loading: state => state.problem.loading,
+      isAuthenticated: state => state.user.token !== ''
+    })
+  },
+  watch: {
+    '$route' (newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.init(true)
+      }
+    },
+    'isAuthenticated' (newVal) {
+      if (newVal === true) {
+        this.init()
       }
     }
   }
+}
 </script>
 
 <style scoped lang="less">
-  .problem-list-container {
-    display: flex;
-    gap: 18px;
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  .problem-list-main {
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .problem-list-sidebar {
-    width: 320px;
-    flex-shrink: 0;
-  }
-  
-  @media (max-width: 1200px) {
-    .problem-list-container {
-      flex-direction: column;
-    }
-    
-    .problem-list-sidebar {
-      width: 100%;
-    }
-  }
-  
-  .taglist-title {
-    margin-left: -10px;
-    margin-bottom: -10px;
-  }
+.taglist-title {
+  margin-left: -10px;
+  margin-bottom: -10px;
+}
 
-  .tag-btn {
-    margin-right: 5px;
-    margin-bottom: 10px;
-    
-    &:not(:disabled) {
-      border-color: #dcdfe6;
-      color: #606266;
-      
-      &:hover {
-        color: #409eff;
-        border-color: #c6e2ff;
-        background-color: #ecf5ff;
-      }
-    }
-    
-    &:disabled {
-      background-color: #409eff !important;
-      color: #fff !important;
-      border-color: #409eff !important;
-    }
-  }
+.tag-btn {
+  margin-right: 5px;
+  margin-bottom: 10px;
+}
 
-  #pick-one {
-    margin-top: 10px;
-  }
-
-  // Style for problem links in table
-  :deep(.ivu-table) {
-    a {
-      &:hover {
-        color: #57a3f3;
-      }
-    }
-  }
+#pick-one {
+  margin-top: 10px;
+}
 </style>

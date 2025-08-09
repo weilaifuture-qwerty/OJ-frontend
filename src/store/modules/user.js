@@ -1,60 +1,48 @@
-import types from '../types'
-import api from '@oj/api'
-import storage from '@/utils/storage'
-import i18n from '@/i18n'
-import { STORAGE_KEY, USER_TYPE, PROBLEM_PERMISSION } from '@/utils/constants'
+import { defineStore } from 'pinia'
+import api from '@/api'
+import { getToken, setToken, removeToken } from '@/utils/auth'
 
-const state = {
-  profile: {}
-}
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    token: getToken(),
+    userInfo: null,
+    loading: false,
+    error: null
+  }),
 
-const getters = {
-  user: state => state.profile.user || {},
-  profile: state => state.profile,
-  isAuthenticated: (state, getters) => {
-    return !!getters.user.id
-  },
-  isAdminRole: (state, getters) => {
-    return getters.user.admin_type === USER_TYPE.ADMIN ||
-      getters.user.admin_type === USER_TYPE.SUPER_ADMIN
-  },
-  isSuperAdmin: (state, getters) => {
-    return getters.user.admin_type === USER_TYPE.SUPER_ADMIN
-  },
-  hasProblemPermission: (state, getters) => {
-    return getters.user.problem_permission !== PROBLEM_PERMISSION.NONE
-  }
-}
+  actions: {
+    async login(userInfo) {
+      this.loading = true
+      try {
+        const response = await api.login(userInfo)
+        const { token } = response.data.data
+        setToken(token)
+        this.token = token
+      } catch (error) {
+        this.error = error
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
 
-const mutations = {
-  [types.CHANGE_PROFILE] (state, {profile}) {
-    state.profile = profile
-    if (profile.language) {
-      i18n.locale = profile.language
+    async getUserInfo() {
+      this.loading = true
+      try {
+        const response = await api.getUserInfo()
+        this.userInfo = response.data.data
+      } catch (error) {
+        this.error = error
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    logout() {
+      removeToken()
+      this.token = ''
+      this.userInfo = null
     }
-    storage.set(STORAGE_KEY.AUTHED, !!profile.user)
   }
-}
-
-const actions = {
-  getProfile ({commit}) {
-    api.getUserInfo().then(res => {
-      commit(types.CHANGE_PROFILE, {
-        profile: res.data.data || {}
-      })
-    })
-  },
-  clearProfile ({commit}) {
-    commit(types.CHANGE_PROFILE, {
-      profile: {}
-    })
-    storage.clear()
-  }
-}
-
-export default {
-  state,
-  getters,
-  actions,
-  mutations
-}
+})

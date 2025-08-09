@@ -9,12 +9,9 @@
           <span v-if="profile.user" class="emphasis">{{profile.user.username}}</span>
           <span v-if="profile.school">@{{profile.school}}</span>
         </p>
-        <MoodDisplay 
-          v-if="profile.mood || profile.mood_emoji"
-          :mood="profile.mood"
-          :emoji="profile.mood_emoji"
-          style="margin: 10px 0"
-        />
+        <p v-if="profile.mood">
+          {{profile.mood}}
+        </p>
         <hr id="split"/>
 
         <div class="flex-container">
@@ -67,12 +64,8 @@
   import { mapActions } from 'vuex'
   import time from '@/utils/time'
   import api from '@oj/api'
-  import MoodDisplay from '@/pages/oj/components/MoodDisplay.vue'
 
   export default {
-    components: {
-      MoodDisplay
-    },
     data () {
       return {
         username: '',

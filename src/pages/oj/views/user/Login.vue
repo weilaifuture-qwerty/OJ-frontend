@@ -1,179 +1,110 @@
 <template>
-  <div>
-    <Form ref="formLogin" :model="formLogin" :rules="ruleLogin">
-      <FormItem prop="username">
-        <Input type="text" v-model="formLogin.username" :placeholder="$t('m.LoginUsername')" size="large" @keyup.enter="handleLogin">
-          <template #prefix>
-            <Icon type="md-person" />
-          </template>
-        </Input>
-      </FormItem>
-      <FormItem prop="password">
-        <Input type="password" v-model="formLogin.password" :placeholder="$t('m.LoginPassword')" size="large" @keyup.enter="handleLogin">
-          <template #prefix>
-            <Icon type="md-lock" />
-          </template>
-        </Input>
-      </FormItem>
-      <FormItem prop="tfa_code" v-if="tfaRequired">
-        <Input v-model="formLogin.tfa_code" :placeholder="$t('m.TFA_Code')">
-          <template #prefix>
-            <Icon type="md-bulb" />
-          </template>
-        </Input>
-      </FormItem>
-    </Form>
-    <div class="footer">
-      <Button
-        type="primary"
-        @click="handleLogin"
-        class="btn" long
-        :loading="btnLoginLoading">
-        {{$t('m.UserLogin')}}
-      </Button>
-      <a v-if="website.allow_register" @click.stop="handleBtnClick('register')">{{$t('m.No_Account')}}</a>
-      <a @click.stop="goResetPassword" style="float: right">{{$t('m.Forget_Password')}}</a>
-    </div>
+  <div class="login-container">
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-width="80px"
+      @submit.prevent="handleSubmit"
+    >
+      <el-form-item label="Username" prop="username">
+        <el-input v-model="form.username" placeholder="Username" />
+      </el-form-item>
+      <el-form-item label="Password" prop="password">
+        <el-input
+          v-model="form.password"
+          type="password"
+          placeholder="Password"
+          show-password
+        />
+      </el-form-item>
+      <el-form-item>
+        <vue3-recaptcha
+          ref="recaptchaRef"
+          :sitekey="recaptchaSiteKey"
+          @verify="onCaptchaVerified"
+          @expire="onCaptchaExpired"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" native-type="submit" :loading="loading">
+          Login
+        </el-button>
+        <el-button type="text" @click="$router.push('/register')">
+          Register
+        </el-button>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Vue3Recaptcha } from 'vue3-recaptcha2'
 import { useUserStore } from '@/stores/user'
-import { useWebsiteStore } from '@/stores/website'
-import api from '@oj/api'
-import { Message } from 'view-ui-plus'
 
-export default {
-  name: 'Login',
-  setup() {
-    const userStore = useUserStore()
-    const websiteStore = useWebsiteStore()
-    
-    return {
-      userStore,
-      websiteStore
-    }
-  },
-  data() {
-    const CheckRequiredTFA = (rule, value, callback) => {
-      if (value !== '') {
-        api.tfaRequiredCheck(value).then(res => {
-          this.tfaRequired = res.data.data.result
-        }).catch(() => {
-          // Handle error silently
-        })
-      }
-      callback()
-    }
+const router = useRouter()
+const userStore = useUserStore()
 
-    return {
-      formLogin: {
-        username: '',
-        password: '',
-        tfa_code: ''
-      },
-      ruleLogin: {
-        username: [
-          { required: true, message: this.$i18n.t('m.LoginUsernameRequired'), trigger: 'blur' },
-          { trigger: 'blur', validator: CheckRequiredTFA }
-        ],
-        password: [
-          { required: true, message: this.$i18n.t('m.LoginPasswordRequired'), trigger: 'blur' },
-          { min: 6, message: this.$i18n.t('m.LoginPasswordNotLess'), trigger: 'blur' }
-        ]
-      },
-      tfaRequired: false,
-      btnLoginLoading: false
-    }
-  },
-  computed: {
-    website() {
-      return this.websiteStore.website
-    }
-  },
-  methods: {
-    handleLogin() {
-      this.$refs.formLogin.validate(async (valid) => {
-        if (!valid) {
-          return
-        }
-        this.btnLoginLoading = true
-        
-        const formData = {
-          username: this.formLogin.username,
-          password: this.formLogin.password
-        }
-        if (this.tfaRequired) {
-          formData.tfa_code = this.formLogin.tfa_code
-        }
-        
-        try {
-          const res = await api.login(formData)
-          Message.success(this.$i18n.t('m.LoginSuccess'))
-          
-          // Get user profile
-          await this.userStore.getProfile()
-          
-          // Close modal
-          this.userStore.changeModalStatus({ visible: false })
-          
-          // Check if there's a redirect
-          if (this.$route.query.redirect) {
-            this.$router.push(this.$route.query.redirect)
-          } else {
-            // Check session storage for redirect
-            let redirect = sessionStorage.getItem('redirect')
-            if (redirect) {
-              sessionStorage.removeItem('redirect')
-              this.$router.push(redirect)
-            } else {
-              this.$router.push('/')
-            }
-          }
-        } catch (error) {
-          if (error.response?.data?.data?.includes('Two Factor Authentication is required')) {
-            this.tfaRequired = true
-          }
-          this.formLogin.password = ''
-        } finally {
-          this.btnLoginLoading = false
-        }
-      })
-    },
-    
-    handleBtnClick(mode) {
-      this.userStore.changeModalStatus({
-        mode: mode,
-        visible: true
-      })
-    },
-    
-    goResetPassword() {
-      this.userStore.changeModalStatus({ visible: false })
-      this.$router.push({ name: 'apply-reset-password' })
-    }
+const formRef = ref(null)
+const recaptchaRef = ref(null)
+const loading = ref(false)
+const recaptchaSiteKey = 'YOUR_RECAPTCHA_SITE_KEY'
+
+const form = reactive({
+  username: '',
+  password: '',
+  recaptcha: ''
+})
+
+const rules = {
+  username: [
+    { required: true, message: 'Please input username', trigger: 'blur' },
+    { min: 3, max: 20, message: 'Length should be 3 to 20', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: 'Please input password', trigger: 'blur' },
+    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' }
+  ]
+}
+
+const onCaptchaVerified = (response) => {
+  form.recaptcha = response
+}
+
+const onCaptchaExpired = () => {
+  form.recaptcha = ''
+  recaptchaRef.value?.reset()
+}
+
+const handleSubmit = async () => {
+  if (!form.recaptcha) {
+    ElMessage.error('Please complete the captcha')
+    return
+  }
+
+  try {
+    loading.value = true
+    await formRef.value.validate()
+    await userStore.login(form)
+    ElMessage.success('Login successful')
+    router.push('/')
+  } catch (error) {
+    ElMessage.error(error.message || 'Login failed')
+    recaptchaRef.value?.reset()
+    form.recaptcha = ''
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.footer {
-  overflow: auto;
-  margin-top: 20px;
-  margin-bottom: -15px;
-  text-align: left;
-  
-  .btn {
-    margin: 0 0 15px 0;
-  }
-  
-  a {
-    color: #57a3f3;
-    cursor: pointer;
-    
-    &:hover {
-      color: #2d8cf0;
-    }
-  }
+.login-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
 }
 </style>

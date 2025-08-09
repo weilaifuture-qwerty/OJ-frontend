@@ -130,7 +130,7 @@
             >
               <template #default="scope">
                 <el-button
-                  type="text"
+                  type=""
                   size="small"
                   @click="removeProblem(scope.$index)"
                   class="delete-btn"

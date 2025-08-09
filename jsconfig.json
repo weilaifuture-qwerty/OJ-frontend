@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@oj/*": ["src/pages/oj/*"],
+      "@oj/components/*": ["src/pages/oj/components/*"],
+      "@oj/api/*": ["src/api/*"],
+      "@oj/utils/*": ["src/utils/*"],
+      "@oj/store/*": ["src/store/*"],
+      "@oj/views/*": ["src/pages/oj/views/*"],
+      "@oj/mixins/*": ["src/pages/oj/components/mixins/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+} 

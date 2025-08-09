@@ -26,13 +26,13 @@
         <small v-if="!loading">{{ $t('m.No_Students_Assigned_To_You') }}</small>
       </div>
       
-      <el-checkbox-group v-else v-model="selectedStudentIds" class="student-grid">
+      <el-checkbox-group v-else v-model="selectedStudentIds" class="student-grid" @change="handleSelectionChange">
         <div
           v-for="student in filteredStudents"
           :key="student.id"
           class="student-item"
         >
-          <el-checkbox :label="student.id" class="student-checkbox">
+          <el-checkbox :value="student.id" class="student-checkbox">
             <div class="student-info">
               <div class="student-name">
                 <strong>{{ student.username }}</strong>
@@ -90,6 +90,10 @@ export default {
       type: Array,
       default: () => []
     },
+    modelValue: {
+      type: Array,
+      default: () => []
+    },
     // If provided, only show these students
     limitToStudents: {
       type: Array,
@@ -112,9 +116,11 @@ export default {
         this.selectedStudentIds = val || []
       }
     },
-    selectedStudentIds(val) {
-      this.$emit('input', val)
-      this.$emit('change', val)
+    modelValue: {
+      immediate: true,
+      handler(val) {
+        this.selectedStudentIds = val || []
+      }
     }
   },
   mounted() {
@@ -221,16 +227,25 @@ export default {
     },
     
     selectAll() {
-      this.selectedStudentIds = this.filteredStudents.map(s => s.id)
+      const allIds = this.filteredStudents.map(s => s.id)
+      this.selectedStudentIds = allIds
+      this.handleSelectionChange(allIds)
     },
     
     deselectAll() {
       this.selectedStudentIds = []
+      this.handleSelectionChange([])
     },
     
     formatLastLogin(dateStr) {
       if (!dateStr) return this.$t('m.Never')
       return dayjs(dateStr).fromNow()
+    },
+    
+    handleSelectionChange(val) {
+      // Only emit the array of selected IDs
+      this.$emit('input', val)  // Vue 2 style v-model
+      this.$emit('update:modelValue', val)  // Vue 3 style v-model
     }
   }
 }

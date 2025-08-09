@@ -1,16 +1,11 @@
 import router from './router'
 import axios from 'axios'
 import utils from '@/utils/utils'
-import { ElMessage } from 'element-plus'
-import { setupCSRFToken } from '@/utils/csrf'
 
+// Configure axios defaults
 axios.defaults.baseURL = '/api'
 axios.defaults.xsrfHeaderName = 'X-CSRFToken'
 axios.defaults.xsrfCookieName = 'csrftoken'
-axios.defaults.withCredentials = true
-
-// Setup CSRF token interceptor
-setupCSRFToken(axios)
 
 export default {
   // 登录
@@ -74,13 +69,6 @@ export default {
       params: {
         id
       }
-    })
-  },
-  // 创建用户
-  createUser (data) {
-    console.log('API createUser called with:', data)
-    return ajax('admin/simple_create_user/', 'post', {
-      data
     })
   },
   // 编辑用户
@@ -307,80 +295,6 @@ export default {
     return ajax('export_problem', 'post', {
       data
     })
-  },
-  getAITagSuggestions (problemData) {
-    return ajax('ai_tag_suggestions', 'post', {
-      data: problemData
-    })
-  },
-  // Homework System - Superadmin
-  getAdminStudentRelations (params) {
-    return ajax('admin/admin_student_relation', 'get', {
-      params
-    })
-  },
-  createAdminStudentRelation (data) {
-    return ajax('admin/admin_student_relation', 'post', {
-      data
-    })
-  },
-  deleteAdminStudentRelation (id) {
-    return ajax('admin/admin_student_relation', 'delete', {
-      params: { id }
-    })
-  },
-  getAdminList () {
-    return ajax('admin/admin_list', 'get')
-  },
-  // Homework System - Admin
-  getHomeworkList (params) {
-    return ajax('admin/homework', 'get', {
-      params
-    })
-  },
-  createHomework (data) {
-    return ajax('admin/homework', 'post', {
-      data
-    })
-  },
-  updateHomework (data) {
-    return ajax('admin/homework', 'put', {
-      data
-    })
-  },
-  getHomeworkDetail (id) {
-    return ajax('admin/homework_detail', 'get', {
-      params: { id }
-    })
-  },
-  assignHomework (data) {
-    return ajax('admin/assign_homework', 'post', {
-      data
-    })
-  },
-  gradeHomework (data) {
-    return ajax('admin/grade_homework', 'post', {
-      data
-    })
-  },
-  getManagedStudents () {
-    return ajax('admin/student_list', 'get')
-  },
-  getHomework (id) {
-    return ajax('admin/homework', 'get', {
-      params: { id }
-    })
-  },
-  deleteHomework (id) {
-    return ajax('admin/homework', 'delete', {
-      params: { id }
-    })
-  },
-  updateHomework (id, data) {
-    return ajax('admin/homework', 'put', {
-      params: { id },
-      data
-    })
   }
 }
 
@@ -406,7 +320,7 @@ function ajax (url, method, options) {
     }).then(res => {
       // API正常返回(status=20x), 是否错误通过有无error判断
       if (res.data.error !== null) {
-        ElMessage.error(res.data.data)
+        Vue.prototype.$error(res.data.data)
         reject(res)
         // // 若后端返回为登录，则为session失效，应退出当前登录用户
         if (res.data.data.startsWith('Please login')) {
@@ -415,13 +329,13 @@ function ajax (url, method, options) {
       } else {
         resolve(res)
         if (method !== 'get') {
-          ElMessage.success('Succeeded')
+          Vue.prototype.$success('Succeeded')
         }
       }
     }, res => {
       // API请求异常，一般为Server error 或 network error
       reject(res)
-      ElMessage.error(res.data?.data || 'Network error')
+      Vue.prototype.$error(res.data.data)
     })
   })
 }

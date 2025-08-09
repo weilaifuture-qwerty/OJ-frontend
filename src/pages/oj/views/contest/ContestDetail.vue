@@ -1,281 +1,258 @@
 <template>
-  <div class="flex-container">
-    <div id="contest-main">
-      <!--children-->
-      <transition name="fadeInUp">
-        <router-view></router-view>
-      </transition>
-      <!--children end-->
-      <div class="flex-container" v-if="route_name === 'contest-details'">
-        <template>
-          <div id="contest-desc">
-            <Panel :padding="20" shadow>
-              <template #title>
-                {{contest.title}}
-              </template>
-              <template #extra>
-                <Tag type="dot" :color="countdownColor">
-                  <span id="countdown">{{countdownText}}</span>
-                </Tag>
-              </template>
-              <div v-html="contest.description" class="markdown-body"></div>
-              <div v-if="passwordFormVisible" class="contest-password">
-                <Input v-model="contestPassword" type="password"
-                       placeholder="contest password" class="contest-password-input"
-                       @enter="checkPassword"/>
-                <Button type="info" @click="checkPassword">Enter</Button>
-              </div>
-            </Panel>
-            <Table :columns="columns" :data="contest_table" disabled-hover style="margin-bottom: 40px;"></Table>
+  <div class="contest-detail">
+    <el-card v-loading="loading">
+      <template #header>
+        <div class="card-header">
+          <h2>{{ contest.title }}</h2>
+          <div class="contest-meta">
+            <el-tag :type="getContestStatusType(contestStatus)">
+              {{ getContestStatusName(contestStatus) }}
+            </el-tag>
+            <span class="time-remaining" v-if="contestStatus !== 'ENDED'">
+              {{ countdown }}
+            </span>
           </div>
-        </template>
-      </div>
+        </div>
+      </template>
 
-    </div>
-    <div v-show="showMenu" id="contest-menu">
-      <ContestMenu 
-        :contest-i-d="contestID"
-        :contest-menu-disabled="contestMenuDisabled"
-        :o-i-contest-real-time-permission="OIContestRealTimePermission"
-        :show-admin-helper="showAdminHelper"
-      />
-    </div>
+      <div class="contest-content">
+        <div class="description" v-html="contest.description"></div>
+        
+        <div class="contest-info">
+          <div class="info-item">
+            <span class="label">Start Time:</span>
+            <span class="value">{{ formatDate(contest.start_time) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">End Time:</span>
+            <span class="value">{{ formatDate(contest.end_time) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Duration:</span>
+            <span class="value">{{ formatDuration(contest.duration) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Type:</span>
+            <span class="value">{{ contest.contest_type }}</span>
+          </div>
+        </div>
+
+        <div v-if="showPasswordForm" class="password-form">
+          <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef">
+            <el-form-item prop="password">
+              <el-input
+                v-model="passwordForm.password"
+                type="password"
+                placeholder="Enter contest password"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleJoinContest" :loading="joining">
+                Join Contest
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <div v-else-if="contestStatus === 'NOT_START'" class="not-started">
+          <p>This contest has not started yet.</p>
+          <el-button type="primary" @click="handleJoinContest" :loading="joining">
+            Join Contest
+          </el-button>
+        </div>
+
+        <div v-else-if="contestStatus === 'UNDERWAY'" class="problems-list">
+          <h3>Problems</h3>
+          <el-table :data="contestProblems" style="width: 100%">
+            <el-table-column prop="id" label="#" width="80" align="center" />
+            <el-table-column prop="title" label="Title" min-width="200">
+              <template #default="{ row }">
+                <router-link :to="`/contest/${contest.id}/problem/${row.id}`" class="problem-link">
+                  {{ row.title }}
+                </router-link>
+              </template>
+            </el-table-column>
+            <el-table-column prop="difficulty" label="Difficulty" width="120" align="center">
+              <template #default="{ row }">
+                <el-tag :type="getDifficultyColor(row.difficulty)">
+                  {{ row.difficulty }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="accepted" label="Accepted" width="100" align="center" />
+            <el-table-column prop="submitted" label="Submitted" width="100" align="center" />
+            <el-table-column prop="acceptanceRate" label="Acceptance Rate" width="150" align="center">
+              <template #default="{ row }">
+                {{ getACRate(row.accepted, row.submitted) }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+    </el-card>
   </div>
 </template>
 
-<script>
-  import dayjs from 'dayjs'
-  import api from '@oj/api'
-  import { useContestStore } from '@/stores/contest'
-  import { CONTEST_STATUS_REVERSE, CONTEST_STATUS } from '@/utils/constants'
-  import time from '@/utils/time'
-  import Panel from '@/pages/oj/components/Panel.vue'
-  import ContestMenu from '@/pages/oj/components/ContestMenu.vue'
-  import { Table, Tag, Input, Button } from 'view-ui-plus'
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useContestStore } from '@/store/modules/contest'
+import { ElMessage } from 'element-plus'
+import { formatDate, formatDuration, getACRate, getDifficultyColor } from '@/utils/utils'
+import { CONTEST_STATUS } from '@/utils/constants'
 
-  export default {
-    name: 'ContestDetail',
-    components: {
-      Panel,
-      ContestMenu,
-      Table,
-      Tag,
-      Input,
-      Button
-    },
-    data () {
-      return {
-        CONTEST_STATUS: CONTEST_STATUS,
-        route_name: '',
-        btnLoading: false,
-        contestID: '',
-        contestPassword: '',
-        columns: [
-          {
-            title: this.$i18n.t('m.StartAt'),
-            render: (h, params) => {
-              return h('span', time.utcToLocal(params.row.start_time))
-            }
-          },
-          {
-            title: this.$i18n.t('m.EndAt'),
-            render: (h, params) => {
-              return h('span', time.utcToLocal(params.row.end_time))
-            }
-          },
-          {
-            title: this.$i18n.t('m.ContestType'),
-            render: (h, params) => {
-              const type = params.row.contest_type || ''
-              return h('span', type ? this.$i18n.t('m.' + type.replace(/ /g, '_')) : '')
-            }
-          },
-          {
-            title: this.$i18n.t('m.Rule'),
-            render: (h, params) => {
-              return h('span', this.$i18n.t('m.' + params.row.rule_type))
-            }
-          },
-          {
-            title: this.$i18n.t('m.Creator'),
-            render: (h, data) => {
-              return h('span', data.row.created_by.username)
-            }
-          }
-        ]
-      }
-    },
-    mounted () {
-      this.contestID = this.$route.params.contestID
-      this.route_name = this.$route.name
-      this.loadContest()
-      
-      // If we're at the root contest route, redirect to the overview
-      if (this.$route.name === 'contest-details' && this.$route.path.endsWith('/')) {
-        // The overview is shown on the main contest-details route
-      }
-    },
-    methods: {
-      async loadContest () {
-        const contestStore = useContestStore()
-        try {
-          await contestStore.getContest(this.contestID)
-          contestStore.changeDomTitle({title: contestStore.contest.title})
-          
-          // Check if user has access
-          if (contestStore.contest.contest_type !== 'Public') {
-            await contestStore.getContestAccess(this.contestID)
-          }
-          
-          // Set up countdown timer
-          let endTime = dayjs(contestStore.contest.end_time)
-          if (endTime.isAfter(dayjs())) {
-            this.timer = setInterval(() => {
-              contestStore.updateNow()
-            }, 1000)
-          }
-        } catch (error) {
-          console.error('Failed to load contest:', error)
-        }
-      },
-      checkPassword () {
-        if (this.contestPassword === '') {
-          this.$error('Password can\'t be empty')
-          return
-        }
-        this.btnLoading = true
-        api.checkContestPassword(this.contestID, this.contestPassword).then((res) => {
-          this.$success('Succeeded')
-          const contestStore = useContestStore()
-          contestStore.access = true
-          this.btnLoading = false
-        }, (res) => {
-          this.btnLoading = false
-        })
-      }
-    },
-    computed: {
-      showMenu () {
-        const contestStore = useContestStore()
-        return contestStore.itemVisible.menu
-      },
-      contest () {
-        const contestStore = useContestStore()
-        return contestStore.contest
-      },
-      contest_table () {
-        const contestStore = useContestStore()
-        return [contestStore.contest]
-      },
-      now () {
-        const contestStore = useContestStore()
-        return contestStore.now
-      },
-      contestMenuDisabled () {
-        const contestStore = useContestStore()
-        return contestStore.contestMenuDisabled
-      },
-      contestRuleType () {
-        const contestStore = useContestStore()
-        return contestStore.contestRuleType
-      },
-      contestStatus () {
-        const contestStore = useContestStore()
-        return contestStore.contestStatus
-      },
-      countdown () {
-        const contestStore = useContestStore()
-        return contestStore.countdown
-      },
-      countdownText () {
-        const seconds = Math.abs(this.countdown)
-        const h = Math.floor(seconds / 3600)
-        const m = Math.floor((seconds - h * 3600) / 60)
-        const s = seconds - h * 3600 - m * 60
-        return `${h}:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`
-      },
-      isContestAdmin () {
-        const contestStore = useContestStore()
-        return contestStore.isContestAdmin
-      },
-      OIContestRealTimePermission () {
-        const contestStore = useContestStore()
-        return contestStore.OIContestRealTimePermission
-      },
-      passwordFormVisible () {
-        const contestStore = useContestStore()
-        return contestStore.contest.contest_type === 'Password Protected' && !contestStore.access
-      },
-      countdownColor () {
-        if (this.contestStatus) {
-          return CONTEST_STATUS_REVERSE[this.contestStatus].color
-        }
-      },
-      showAdminHelper () {
-        return this.isContestAdmin && this.contestRuleType === 'ACM'
-      }
-    },
-    watch: {
-      '$route' (newVal) {
-        this.route_name = newVal.name
-        this.contestID = newVal.params.contestID
-        const contestStore = useContestStore()
-        contestStore.changeDomTitle({title: this.contest.title})
-      }
-    },
-    beforeDestroy () {
-      clearInterval(this.timer)
-      const contestStore = useContestStore()
-      contestStore.clearContest()
-    }
+const route = useRoute()
+const router = useRouter()
+const contestStore = useContestStore()
+
+const loading = ref(false)
+const joining = ref(false)
+const passwordFormRef = ref(null)
+const passwordForm = ref({
+  password: ''
+})
+
+const passwordRules = {
+  password: [
+    { required: true, message: 'Please enter the contest password', trigger: 'blur' }
+  ]
+}
+
+const contest = computed(() => contestStore.currentContest)
+const contestStatus = computed(() => contestStore.contestStatus)
+const countdown = computed(() => contestStore.countdown)
+const showPasswordForm = computed(() => contestStore.passwordFormVisible)
+const contestProblems = computed(() => contestStore.contestProblems)
+
+const getContestStatusType = (status) => {
+  switch (status) {
+    case CONTEST_STATUS.NOT_START:
+      return 'warning'
+    case CONTEST_STATUS.UNDERWAY:
+      return 'success'
+    case CONTEST_STATUS.ENDED:
+      return 'info'
+    default:
+      return 'info'
   }
+}
+
+const getContestStatusName = (status) => {
+  switch (status) {
+    case CONTEST_STATUS.NOT_START:
+      return 'Not Started'
+    case CONTEST_STATUS.UNDERWAY:
+      return 'Underway'
+    case CONTEST_STATUS.ENDED:
+      return 'Ended'
+    default:
+      return 'Unknown'
+  }
+}
+
+const handleJoinContest = async () => {
+  if (!passwordFormRef.value) return
+  
+  try {
+    await passwordFormRef.value.validate()
+    joining.value = true
+    await contestStore.joinContest(route.params.id, passwordForm.value.password)
+    ElMessage.success('Successfully joined the contest')
+  } catch (error) {
+    ElMessage.error(error.message || 'Failed to join contest')
+  } finally {
+    joining.value = false
+  }
+}
+
+let timer = null
+
+onMounted(async () => {
+  try {
+    loading.value = true
+    await contestStore.fetchContest(route.params.id)
+    timer = setInterval(() => {
+      contestStore.updateNow()
+    }, 1000)
+  } catch (error) {
+    ElMessage.error('Failed to load contest details')
+  } finally {
+    loading.value = false
+  }
+})
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer)
+  }
+})
 </script>
 
-<style scoped lang="less">
-  .flex-container {
-    display: flex;
-    
-    #contest-main {
-      flex: 1 1 auto;
-      min-width: 0;
-      
-      #contest-desc {
-        .markdown-body {
-          margin: 20px 0;
-          
-          pre {
-            display: inline-block;
-          }
-        }
-      }
-    }
-    
-    #contest-menu {
-      flex: 0 0 250px;
-      margin-left: 20px;
-    }
-    
-    .contest-password {
-      margin-top: 20px;
-      margin-bottom: -10px;
-      
-      &-input {
-        width: 200px;
-        margin-right: 10px;
-      }
-    }
-  }
+<style scoped>
+.contest-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
-  #countdown {
-    font-size: 14px;
-    font-weight: 500;
-  }
-  
-  /deep/ .ivu-table {
-    margin-top: 20px;
-    
-    td {
-      padding: 12px 8px;
-    }
-  }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contest-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.time-remaining {
+  color: #666;
+}
+
+.contest-content {
+  margin-top: 20px;
+}
+
+.contest-info {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.info-item {
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.label {
+  font-weight: bold;
+  min-width: 100px;
+}
+
+.password-form {
+  max-width: 400px;
+  margin: 20px auto;
+}
+
+.not-started {
+  text-align: center;
+  margin: 40px 0;
+}
+
+.problems-list {
+  margin-top: 30px;
+}
+
+.problem-link {
+  color: #409EFF;
+  text-decoration: none;
+}
+
+.problem-link:hover {
+  text-decoration: underline;
+}
 </style>

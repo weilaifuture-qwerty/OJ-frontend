@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import routes from './routes'
 import storage from '@/utils/storage'
 import { STORAGE_KEY } from '@/utils/constants'
-import { useUserStore } from '@/stores/user'
+import { useStore } from 'vuex'
 import { LoadingBar } from 'view-ui-plus'
 
 const router = createRouter({
@@ -11,7 +11,7 @@ const router = createRouter({
     if (savedPosition) {
       return savedPosition
     } else {
-      return { left: 0, top: 0 }
+      return {x: 0, y: 0}
     }
   },
   routes
@@ -22,8 +22,6 @@ router.beforeEach((to, from, next) => {
   LoadingBar.start()
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!storage.get(STORAGE_KEY.AUTHED)) {
-      const userStore = useUserStore()
-      userStore.changeModalStatus({ mode: 'login', visible: true })
       next({
         name: 'home'
       })
@@ -35,7 +33,7 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-router.afterEach((to, from) => {
+router.afterEach(() => {
   LoadingBar.finish()
 })
 

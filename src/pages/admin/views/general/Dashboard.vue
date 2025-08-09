@@ -4,7 +4,7 @@
       <el-card class="admin-info">
         <el-row :gutter="20">
           <el-col :span="10">
-            <img class="avatar" :src="avatarSrc" @error="handleAvatarError"/>
+            <img class="avatar" :src="profile.avatar"/>
           </el-col>
           <el-col :span="14">
             <p class="admin-info-name">{{user.username}}</p>
@@ -16,7 +16,7 @@
           <p class="last-info-title">{{$t('m.Last_Login')}}</p>
           <el-form label-width="80px" class="last-info-body">
             <el-form-item label="Time:">
-              <span>{{$filters.localtime(session.last_activity)}}</span>
+              <span>{{session.last_activity | localtime}}</span>
             </el-form-item>
             <el-form-item label="IP:">
               <span>{{session.ip}}</span>
@@ -92,21 +92,16 @@
   </el-row>
 </template>
 
-
 <script>
+  import { mapGetters } from 'vuex'
   import browserDetector from 'browser-detect'
   import InfoCard from '@admin/components/infoCard.vue'
   import api from '@admin/api'
-  import { useAdminStore } from '@/stores/admin'
 
   export default {
     name: 'dashboard',
     components: {
       InfoCard
-    },
-    setup() {
-      const adminStore = useAdminStore()
-      return { adminStore }
     },
     data () {
       return {
@@ -158,24 +153,10 @@
           })[0]
         }
         this.session = session
-      },
-      handleAvatarError(e) {
-        e.target.src = '/default-avatar.svg'
       }
     },
     computed: {
-      profile() {
-        return this.adminStore.profile
-      },
-      user() {
-        return this.adminStore.user
-      },
-      avatarSrc() {
-        return this.profile?.avatar || '/default-avatar.svg'
-      },
-      isSuperAdmin() {
-        return this.adminStore.isSuperAdmin
-      },
+      ...mapGetters(['profile', 'user', 'isSuperAdmin']),
       cdn () {
         return this.infoData.env.STATIC_CDN_HOST
       },
@@ -235,5 +216,4 @@
       margin-bottom: 10px;
     }
   }
-
 </style>

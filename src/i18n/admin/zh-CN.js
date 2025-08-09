@@ -1,12 +1,8 @@
 export const m = {
-  // Common
-  Search: '搜索',
-  Create: '创建',
   // SideMenu.vue
   Dashboard: '仪表盘',
   General: '常用设置',
   User: '用户管理',
-  Students: '学生管理',
   Announcement: '公告管理',
   System_Config: '系统配置',
   Judge_Server: '判题服务器',
@@ -23,7 +19,6 @@ export const m = {
   Create_Contest: '创建比赛',
   // User.vue
   User_User: '用户',
-  Create_User: '创建用户',
   Import_User: '导入用户',
   Generate_User: '生成用户',
   // User.vue-dialog
@@ -101,16 +96,6 @@ export const m = {
   Low: '低',
   Tag: '标签',
   New_Tag: '新增标签',
-  // AI Tag Suggestions
-  AI_Suggest_Tags: 'AI 推荐标签',
-  AI_Suggested_Tags: 'AI 推荐的标签',
-  Analyzing_problem_content: '正在分析题目内容...',
-  confidence: '置信度',
-  Add: '添加',
-  Added: '已添加',
-  Add_All_Suggestions: '添加所有推荐',
-  No_tag_suggestions_available: '暂无标签推荐',
-  Try_adding_more_problem_details: '请添加更多题目详情',
   // ProblemList.vue
   Contest_Problem_List: '比赛问题列表',
   // Contest.vue

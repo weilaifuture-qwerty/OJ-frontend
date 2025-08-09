@@ -26,10 +26,10 @@ function render (el, binding) {
 }
 
 export default {
-  install: function (app, options) {
-    app.directive('katex', {
-      mounted: render,
-      updated: render
+  install: function (Vue, options) {
+    Vue.directive('katex', {
+      bind: render,
+      componentUpdated: render
     })
   }
 }

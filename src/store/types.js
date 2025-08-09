@@ -1,26 +1,33 @@
-function keyMirror (obj) {
-  if (obj instanceof Object) {
-    var _obj = Object.assign({}, obj)
-    var _keyArray = Object.keys(obj)
-    _keyArray.forEach(key => {
-      _obj[key] = key
-    })
-    return _obj
-  }
+export default {
+  // Problem mutations
+  SET_PROBLEMS: 'SET_PROBLEMS',
+  SET_CURRENT_PROBLEM: 'SET_CURRENT_PROBLEM',
+  SET_TOTAL: 'SET_TOTAL',
+  SET_LOADING: 'SET_LOADING',
+  SET_ERROR: 'SET_ERROR',
+
+  // User mutations
+  SET_TOKEN: 'SET_TOKEN',
+  SET_USER_INFO: 'SET_USER_INFO',
+  CLEAR_USER: 'CLEAR_USER',
+
+  // Contest
+  CHANGE_CONTEST: 'CHANGE_CONTEST',
+  CHANGE_CONTEST_ITEM_VISIBLE: 'CHANGE_CONTEST_ITEM_VISIBLE',
+  CHANGE_RANK_FORCE_UPDATE: 'CHANGE_RANK_FORCE_UPDATE',
+  CHANGE_CONTEST_PROBLEMS: 'CHANGE_CONTEST_PROBLEMS',
+  CHANGE_CONTEST_RANK_LIMIT: 'CHANGE_CONTEST_RANK_LIMIT',
+  CONTEST_ACCESS: 'CONTEST_ACCESS',
+  CLEAR_CONTEST: 'CLEAR_CONTEST',
+  NOW: 'NOW',
+  NOW_ADD_1S: 'NOW_ADD_1S',
+
+  // User
+  CHANGE_USER: 'CHANGE_USER',
+  CHANGE_USER_PROFILE: 'CHANGE_USER_PROFILE',
+  CHANGE_USER_AUTH: 'CHANGE_USER_AUTH',
+
+  // Website
+  UPDATE_WEBSITE_CONF: 'UPDATE_WEBSITE_CONF',
+  CHANGE_MODAL_STATUS: 'CHANGE_MODAL_STATUS'
 }
-
-export default keyMirror({
-  'CHANGE_PROFILE': null,
-  'CHANGE_MODAL_STATUS': null,
-  'UPDATE_WEBSITE_CONF': null,
-
-  'NOW': null,
-  'NOW_ADD_1S': null,
-  'CHANGE_CONTEST': null,
-  'CHANGE_CONTEST_PROBLEMS': null,
-  'CHANGE_CONTEST_ITEM_VISIBLE': null,
-  'CHANGE_RANK_FORCE_UPDATE': null,
-  'CHANGE_CONTEST_RANK_LIMIT': null,
-  'CONTEST_ACCESS': null,
-  'CLEAR_CONTEST': null
-})

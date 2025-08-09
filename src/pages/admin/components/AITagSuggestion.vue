@@ -21,7 +21,7 @@
         <div class="suggestion-header">
           <span>{{ $t('m.AI_Suggested_Tags') }}</span>
           <el-button 
-            type="text" 
+            type="" 
             size="mini" 
             @click="showSuggestions = false"
           >

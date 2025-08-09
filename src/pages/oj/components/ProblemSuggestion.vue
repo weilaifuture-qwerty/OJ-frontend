@@ -263,10 +263,10 @@ export default {
         
         // Get AI-powered suggestions
         const res = await api.getProblemSuggestions()
-        if (res.data && res.data.data) {
-          this.suggestions = res.data.data.suggestions || []
+        if (res.data && res.data.data && res.data.data.suggestions) {
+          this.suggestions = res.data.data.suggestions
         } else {
-          // Fallback to mock suggestions if API not implemented
+          // Fallback to mock suggestions if API returns empty
           this.suggestions = await this.generateMockSuggestions()
         }
       } catch (error) {

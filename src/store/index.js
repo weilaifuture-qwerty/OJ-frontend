@@ -1,74 +1,75 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import user from './modules/user'
-import contest from './modules/contest'
-import api from '@oj/api'
-import types from './types'
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 
-Vue.use(Vuex)
-const debug = process.env.NODE_ENV !== 'production'
+export const useProblemStore = defineStore('problem', () => {
+  const problemList = ref([])
+  const problem = ref(null)
+  const loading = ref(false)
 
-const rootState = {
-  website: {},
-  modalStatus: {
-    mode: 'login', // or 'register',
-    visible: false
+  const getProblemList = computed(() => problemList.value)
+  const getProblem = computed(() => problem.value)
+  const isLoading = computed(() => loading.value)
+
+  function setProblemList(list) {
+    problemList.value = list
   }
-}
 
-const rootGetters = {
-  'website' (state) {
-    return state.website
-  },
-  'modalStatus' (state) {
-    return state.modalStatus
+  function setProblem(p) {
+    problem.value = p
   }
-}
 
-const rootMutations = {
-  [types.UPDATE_WEBSITE_CONF] (state, payload) {
-    state.website = payload.websiteConfig
-  },
-  [types.CHANGE_MODAL_STATUS] (state, {mode, visible}) {
-    if (mode !== undefined) {
-      state.modalStatus.mode = mode
-    }
-    if (visible !== undefined) {
-      state.modalStatus.visible = visible
-    }
+  function setLoading(status) {
+    loading.value = status
   }
-}
 
-const rootActions = {
-  getWebsiteConfig ({commit}) {
-    api.getWebsiteConf().then(res => {
-      commit(types.UPDATE_WEBSITE_CONF, {
-        websiteConfig: res.data.data
-      })
-    })
-  },
-  changeModalStatus ({commit}, payload) {
-    commit(types.CHANGE_MODAL_STATUS, payload)
-  },
-  changeDomTitle ({commit, state}, payload) {
-    if (payload && payload.title) {
-      window.document.title = state.website.website_name_shortcut + ' | ' + payload.title
-    } else {
-      window.document.title = state.website.website_name_shortcut + ' | ' + state.route.meta.title
-    }
+  return {
+    problemList,
+    problem,
+    loading,
+    getProblemList,
+    getProblem,
+    isLoading,
+    setProblemList,
+    setProblem,
+    setLoading
   }
-}
-
-export default new Vuex.Store({
-  modules: {
-    user,
-    contest
-  },
-  state: rootState,
-  getters: rootGetters,
-  mutations: rootMutations,
-  actions: rootActions,
-  strict: debug
 })
 
-export { types }
+export const useUserStore = defineStore('user', () => {
+  const user = ref(null)
+  const token = ref(null)
+  const loading = ref(false)
+
+  const getUser = computed(() => user.value)
+  const getToken = computed(() => token.value)
+  const isLoading = computed(() => loading.value)
+
+  function setUser(u) {
+    user.value = u
+  }
+
+  function setToken(t) {
+    token.value = t
+  }
+
+  function setLoading(status) {
+    loading.value = status
+  }
+
+  return {
+    user,
+    token,
+    loading,
+    getUser,
+    getToken,
+    isLoading,
+    setUser,
+    setToken,
+    setLoading
+  }
+})
+
+export default {
+  useProblemStore,
+  useUserStore
+}

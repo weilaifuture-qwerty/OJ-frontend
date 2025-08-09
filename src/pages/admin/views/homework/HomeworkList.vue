@@ -1,3 +1,4 @@
+<!-- unplugin-vue-components disabled -->
 <template>
   <div class="homework-list">
     <!-- Modern Header -->
@@ -257,7 +258,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <span>{{ isEditing ? 'Edit Homework' : 'Create New Homework' }}</span>
           <el-button 
-            type="text" 
+            type="" 
             @click="cancelCreate"
             style="padding: 0;">
             <i class="el-icon-close" style="font-size: 18px;"></i>
@@ -364,7 +365,7 @@
             <el-table-column label="Actions" width="80" align="center">
               <template #default="scope">
                 <el-button
-                  type="text"
+                  type=""
                   size="small"
                   @click="removeProblem(scope.$index)"
                   style="color: #f56c6c;"
@@ -410,8 +411,7 @@
     >
       <StudentSelector
         v-if="showStudentSelector"
-        :value="homework.student_ids"
-        @change="handleStudentSelection"
+        v-model="homework.student_ids"
       />
       <template #footer>
         <el-button @click="showStudentSelector = false">Cancel</el-button>
@@ -650,12 +650,6 @@ export default {
       this.showProblemSelector = false
     },
     
-    handleStudentSelection(studentIds) {
-      console.log('handleStudentSelection received:', studentIds)
-      // Ensure it's an array
-      this.homework.student_ids = Array.isArray(studentIds) ? studentIds : []
-    },
-    
     removeProblem(index) {
       this.homework.problems.splice(index, 1)
     },
@@ -688,18 +682,15 @@ export default {
             title: this.homework.title,
             description: this.homework.description || 'No description provided',
             due_date: formattedDueDate,
-            // Format problems as expected by backend
-            problems: this.homework.problems.map(p => ({
-              problem_id: p.id,
-              score: p.score || 10  // Default score if not set
-            })),
+            // Backend expects problem_ids as an array of IDs
+            problem_ids: this.homework.problems.map(p => p.id),
             // Ensure student_ids is an array
             student_ids: Array.isArray(this.homework.student_ids) ? this.homework.student_ids : [],
-            settings: this.homework.settings
+            auto_grade: true  // Enable auto-grading by default
           }
           
           if (this.isEditing) {
-            await api.updateHomework(this.homework.id, data)
+            await api.updateHomework({ id: this.homework.id, ...data })
             this.$success('Homework updated successfully')
           } else {
             await api.createHomework(data)

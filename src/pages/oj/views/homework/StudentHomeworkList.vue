@@ -10,9 +10,10 @@
         <p class="hero-subtitle">Track your assignments and progress</p>
       </div>
       <div class="hero-stats">
-        <div class="stat-card">
+        <div class="stat-card" :class="{ 'warning': stats.overdue > 0 }">
           <div class="stat-value">{{ stats.pending }}</div>
           <div class="stat-label">Pending</div>
+          <div v-if="stats.overdue > 0" class="stat-badge">{{ stats.overdue }} overdue</div>
         </div>
         <div class="stat-card">
           <div class="stat-value">{{ stats.inProgress }}</div>
@@ -22,7 +23,7 @@
           <div class="stat-value">{{ stats.completed }}</div>
           <div class="stat-label">Completed</div>
         </div>
-        <div class="stat-card success">
+        <div class="stat-card" :class="{ success: stats.avgGrade >= 80, warning: stats.avgGrade < 60 && stats.avgGrade > 0 }">
           <div class="stat-value">{{ stats.avgGrade }}%</div>
           <div class="stat-label">Avg Grade</div>
         </div>
@@ -207,7 +208,8 @@ export default {
         pending: 0,
         inProgress: 0,
         completed: 0,
-        avgGrade: 0
+        avgGrade: 0,
+        overdue: 0
       }
     }
   },
@@ -276,12 +278,14 @@ export default {
       try {
         const params = {
           page: this.currentPage,
-          limit: 100 // Get all for client-side filtering
+          limit: 100, // Get all for client-side filtering
+          offset: 0
         }
         
         const res = await api.getStudentHomework(params)
         
         if (res && res.data && res.data.data) {
+          // The API returns data in the expected format
           this.homeworkList = res.data.data.results || []
           this.total = res.data.data.total || 0
           
@@ -289,15 +293,20 @@ export default {
           this.homeworkList = this.homeworkList.map(h => ({
             ...h,
             progress: this.calculateProgress(h),
+            // Ensure all fields have defaults
             completed_count: h.completed_count || 0,
-            assigned_by: h.assigned_by || 'Unknown'
+            problem_count: h.problem_count || 0,
+            assigned_by: h.assigned_by || 'Unknown',
+            status: h.status || 'assigned',
+            grade: h.grade || null,
+            feedback: h.feedback || null
           }))
         } else {
+          console.log('[DEBUG] No homework data in response')
           this.homeworkList = []
           this.total = 0
         }
       } catch (err) {
-        // Don't show error for 404, just show empty list
         this.homeworkList = []
         this.total = 0
         
@@ -323,11 +332,24 @@ export default {
     },
     
     calculateProgress(homework) {
-      if (homework.problem_count === 0) return 0
-      return Math.round((homework.completed_count / homework.problem_count) * 100)
+      const problemCount = homework.problem_count || homework.problems?.length || 0
+      const completedCount = homework.completed_count || 0
+      
+      if (problemCount === 0) return 0
+      return Math.round((completedCount / problemCount) * 100)
     },
     
     calculateStats() {
+      // Count overdue homework
+      const now = dayjs()
+      this.stats.overdue = this.homeworkList.filter(h => {
+        const isOverdue = h.due_date && 
+                         dayjs(h.due_date).isBefore(now) && 
+                         !['submitted', 'graded'].includes(h.status)
+        return isOverdue
+      }).length
+      
+      // If homework is overdue but not submitted, it should still count as pending or in_progress
       this.stats.pending = this.homeworkList.filter(h => h.status === 'assigned').length
       this.stats.inProgress = this.homeworkList.filter(h => h.status === 'in_progress').length
       this.stats.completed = this.homeworkList.filter(h => ['submitted', 'graded'].includes(h.status)).length
@@ -336,6 +358,8 @@ export default {
       if (gradedHomework.length > 0) {
         const totalGrade = gradedHomework.reduce((sum, h) => sum + h.grade, 0)
         this.stats.avgGrade = Math.round(totalGrade / gradedHomework.length)
+      } else {
+        this.stats.avgGrade = 0
       }
     },
     
@@ -441,6 +465,67 @@ export default {
         graded: 'Your graded homework will appear here'
       }
       return descriptions[this.activeTab] || 'No homework matches your criteria'
+    },
+    
+    getMockHomeworkData() {
+      // Mock data for testing when API is not available
+      return [
+        {
+          id: 1,
+          title: 'Algorithm Practice Set 1',
+          description: 'Basic sorting and searching algorithms',
+          status: 'assigned',
+          due_date: dayjs().add(2, 'day').format(),
+          problem_count: 5,
+          completed_count: 0,
+          assigned_by: 'Prof. Smith',
+          grade: null
+        },
+        {
+          id: 2,
+          title: 'Data Structures Assignment',
+          description: 'Implement linked lists and binary trees',
+          status: 'in_progress',
+          due_date: dayjs().add(5, 'day').format(),
+          problem_count: 8,
+          completed_count: 3,
+          assigned_by: 'Prof. Johnson',
+          grade: null
+        },
+        {
+          id: 3,
+          title: 'Dynamic Programming Problems',
+          description: 'Classic DP problems',
+          status: 'assigned',
+          due_date: dayjs().subtract(1, 'day').format(), // Overdue
+          problem_count: 6,
+          completed_count: 0,
+          assigned_by: 'Prof. Chen',
+          grade: null
+        },
+        {
+          id: 4,
+          title: 'Graph Theory Basics',
+          description: 'BFS, DFS, and shortest path algorithms',
+          status: 'submitted',
+          due_date: dayjs().subtract(3, 'day').format(),
+          problem_count: 4,
+          completed_count: 4,
+          assigned_by: 'Prof. Davis',
+          grade: null
+        },
+        {
+          id: 5,
+          title: 'String Manipulation',
+          description: 'String algorithms and pattern matching',
+          status: 'graded',
+          due_date: dayjs().subtract(7, 'day').format(),
+          problem_count: 5,
+          completed_count: 5,
+          assigned_by: 'Prof. Wilson',
+          grade: 92
+        }
+      ]
     }
   }
 }
@@ -511,6 +596,11 @@ export default {
         background: rgba(103, 194, 58, 0.3);
       }
       
+      &.warning {
+        background: rgba(245, 108, 108, 0.3);
+        position: relative;
+      }
+      
       .stat-value {
         font-size: 28px;
         font-weight: 700;
@@ -522,6 +612,18 @@ export default {
         opacity: 0.9;
         text-transform: uppercase;
         letter-spacing: 1px;
+      }
+      
+      .stat-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #f56c6c;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 600;
       }
     }
   }
