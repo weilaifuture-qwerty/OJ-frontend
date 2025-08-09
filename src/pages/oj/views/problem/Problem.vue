@@ -146,8 +146,8 @@
             <p>{{problem.time_limit}}MS</p></li>
           <li>
             <p>{{$t('m.Memory_Limit')}}</p>
-            <p>{{problem.memory_limit}}MB</p></li>
-          <li>
+            <p>{{problem.memory_limit}}MB</p>
+          </li>
           <li>
             <p>{{$t('m.IOMode')}}</p>
             <p>{{problem.io_mode.io_mode}}</p>
