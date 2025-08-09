@@ -3,8 +3,8 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files (only package.json and yarn.lock)
+COPY package.json ./
 COPY yarn.lock ./
 
 # Install dependencies
