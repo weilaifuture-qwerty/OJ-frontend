@@ -31,8 +31,8 @@
       </div>
       </Col>
     </Row>
-    <codemirror :model-value="value" :options="options" @update:model-value="onEditorCodeChange" ref="myEditor">
-    </codemirror>
+    <Codemirror :model-value="value" :options="options" @update:model-value="onEditorCodeChange" ref="myEditor">
+    </Codemirror>
   </div>
 </template>
 
@@ -40,7 +40,7 @@
 import { defineComponent, ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import utils from '@/utils/utils'
-import { codemirror } from 'vue-codemirror-lite'
+import { Codemirror } from 'vue-codemirror'
 
 // theme
 import 'codemirror/theme/monokai.css'
@@ -65,7 +65,7 @@ import 'codemirror/addon/fold/indent-fold.js'
 export default defineComponent({
   name: 'CodeMirror',
   components: {
-    codemirror
+    Codemirror
   },
   props: {
     value: {
