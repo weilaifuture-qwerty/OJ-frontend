@@ -13,17 +13,17 @@ import SubmissionList from '@/pages/oj/views/submission/SubmissionList.vue'
 import SubmissionDetails from '@/pages/oj/views/submission/SubmissionDetails.vue'
 import ContestList from '@/pages/oj/views/contest/ContestList.vue'
 import ContestDetails from '@/pages/oj/views/contest/ContestDetail.vue' // Assuming ContestDetail.vue is the correct file
-import ContestProblemList from '@/pages/oj/views/contest/ContestProblemList.vue'
+import ContestProblemList from '@/pages/oj/views/contest/children/ContestProblemList.vue'
 import Announcements from '@/pages/oj/views/general/Announcements.vue'
-import ContestRank from '@/pages/oj/views/contest/ContestRank.vue'
+import ContestRank from '@/pages/oj/views/contest/children/ContestRank.vue'
 import ACMContestHelper from '@/pages/oj/views/contest/ACMContestHelper.vue' // May need to create this
 import ACMRank from '@/pages/oj/views/rank/ACMRank.vue' // May need to create this
 import OIRank from '@/pages/oj/views/rank/OIRank.vue' // May need to create this
 import UserHome from '@/pages/oj/views/user/UserHome.vue'
 import Settings from '@/pages/oj/views/setting/Settings.vue' // May need to create this
-import ProfileSetting from '@/pages/oj/views/setting/ProfileSetting.vue' // May need to create this
-import AccountSetting from '@/pages/oj/views/setting/AccountSetting.vue' // May need to create this
-import SecuritySetting from '@/pages/oj/views/setting/SecuritySetting.vue' // May need to create this
+import ProfileSetting from '@/pages/oj/views/setting/children/ProfileSetting.vue'
+import AccountSetting from '@/pages/oj/views/setting/children/AccountSetting.vue'
+import SecuritySetting from '@/pages/oj/views/setting/children/SecuritySetting.vue'
 import About from '@/pages/oj/views/help/About.vue' // May need to create this
 import FAQ from '@/pages/oj/views/help/FAQ.vue' // May need to create this
 import NotFound from '@/pages/oj/views/general/404.vue'
