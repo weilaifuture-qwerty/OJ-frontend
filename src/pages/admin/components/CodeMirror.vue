@@ -1,8 +1,8 @@
 <template>
-  <Codemirror v-model="currentValue" :options="options" ref="editor"></Codemirror>
+  <CodeMirrorWrapper v-model="currentValue" :options="options" ref="editor" />
 </template>
 <script>
-  import { Codemirror } from 'vue-codemirror'
+  import CodeMirrorWrapper from '@/components/CodeMirrorWrapper.vue'
   import 'codemirror/mode/clike/clike.js'
   import 'codemirror/mode/python/python.js'
   import 'codemirror/theme/solarized.css'
@@ -26,7 +26,7 @@
       }
     },
     components: {
-      Codemirror
+      CodeMirrorWrapper
     },
     props: {
       value: {
